@@ -40,821 +40,886 @@
 <body class="bg-slate-50 text-slate-900 font-sans">
     <div id="root"></div>
 
-    <script type="text/babel">
-        const { useState, useMemo } = React;
-        const { jsPDF } = window.jspdf;
 
-        // --- UTILITY FUNCTIONS ---
-        // Converts ISO date (YYYY-MM-DD) to DD-MM-YYYY format
-        const formatDateDDMMYYYY = (isoDate) => {
-            if (!isoDate) return '-';
-            const parts = isoDate.split('-');
-            if (parts.length === 3) {
-                // parts[0]=YYYY, parts[1]=MM, parts[2]=DD
-                return `${parts[2]}-${parts[1]}-${parts[0]}`;
-            }
-            return isoDate; // return as is if format is unexpected
-        };
+<script type="text/babel">
+    const { useState, useMemo } = React;
+    const { jsPDF } = window.jspdf;
 
-        // --- ICONS ---
-        const AlertCircle = ({ className }) => (
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-                <circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line>
-            </svg>
+    // --- UTILITY FUNCTIONS ---
+    // Converts ISO date (YYYY-MM-DD) to DD-MM-YYYY format
+    const formatDateDDMMYYYY = (isoDate) => {
+        if (!isoDate) return '-';
+        const parts = isoDate.split('-');
+        if (parts.length === 3) {
+            // parts[0]=YYYY, parts[1]=MM, parts[2]=DD
+            return `${parts[2]}-${parts[1]}-${parts[0]}`;
+        }
+        return isoDate; // return as is if format is unexpected
+    };
+
+    // --- ICONS ---
+    const AlertCircle = ({ className }) => (
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+            <circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y2="16" x2="12.01" y2="16"></line>
+        </svg>
+    );
+
+    const CheckCircle = ({ className }) => (
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline>
+        </svg>
+    );
+
+    const RefreshCw = ({ className }) => (
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+            <polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+        </svg>
+    );
+
+    const Calculator = ({ className }) => (
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+            <rect x="4" y="2" width="16" height="20" rx="2"></rect><line x1="8" y1="6" x2="16" y2="6"></line><line x1="16" y1="14" x2="16" y2="14"></line><line x1="12" y1="14" x2="12" y2="14"></line><line x1="8" y1="14" x2="8" y2="14"></line><line x1="16" y1="18" x2="16" y2="18"></line><line x1="12" y1="18" x2="12" y2="18"></line><line x1="8" y1="18" x2="8" y2="18"></line>
+        </svg>
+    );
+
+    const FileText = ({ className }) => (
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline>
+        </svg>
+    );
+    
+    const DownloadIcon = ({ className }) => (
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line>
+        </svg>
+    );
+
+    const Info = ({ className }) => (
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+            <circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>
+        </svg>
+    );
+
+    // --- CONSTANTS & SPECIFICATIONS ---
+
+    const SIEVES = [
+        { id: 80, label: '80 mm', isStandard: true },
+        { id: 63, label: '63 mm', isStandard: false },
+        { id: 40, label: '40 mm', isStandard: true },
+        { id: 20, label: '20 mm', isStandard: true },
+        { id: 16, label: '16 mm', isStandard: false },
+        { id: 12.5, label: '12.5 mm', isStandard: false },
+        { id: 10, label: '10 mm', isStandard: true },
+        { id: 4.75, label: '4.75 mm', isStandard: true },
+        { id: 2.36, label: '2.36 mm', isStandard: true },
+        { id: 1.18, label: '1.18 mm', isStandard: true },
+        { id: 0.6, label: '600 micron', isStandard: true },
+        { id: 0.3, label: '300 micron', isStandard: true },
+        { id: 0.15, label: '150 micron', isStandard: true },
+    ];
+
+    // Table IV: Minimum Weight of Sample (IS 2386 Part 1)
+    const MIN_SAMPLE_WEIGHTS = {
+        63: 50000, // 50kg
+        40: 15000, // 15kg
+        20: 2000,  // 2kg
+        16: 2000,  // 2kg
+        12.5: 1000,// 1kg
+        10: 500,   // 0.5kg
+        4.75: 200  // 0.2kg (Fine Agg)
+    };
+
+    // Table III: Maximum Weight to be Retained (g) (IS 2386 Part 1)
+    // [0] = 45cm dia, [1] = 30cm dia.
+    const MAX_RETAINED_COARSE = {
+        40: [8000, 3500],
+        20: [4000, 2000],
+        16: [3000, 1500], 
+        12.5: [3000, 1500],
+        10: [2000, 1000],
+        4.75: [1000, 500]
+    };
+
+    // For 20cm dia sieve (Fine Aggregate)
+    const MAX_RETAINED_FINE = {
+        2.36: 200,
+        1.18: 100,
+        0.6: 75,
+        0.3: 50,
+        0.15: 40
+    };
+
+    const SPECS = {
+        // --- COARSE: SINGLE SIZED ---
+        'single_63': {
+            name: 'Single Sized: 63 mm',
+            group: 'Coarse Aggregates (Single Sized)',
+            type: 'coarse',
+            nominalSize: 63,
+            sieves: [80, 63, 40, 20, 16, 12.5, 10, 4.75, 2.36],
+            limits: { 80: [100, 100], 63: [85, 100], 40: [0, 30], 20: [0, 5], 10: [0, 5] }
+        },
+        'single_40': {
+            name: 'Single Sized: 40 mm',
+            group: 'Coarse Aggregates (Single Sized)',
+            type: 'coarse',
+            nominalSize: 40,
+            sieves: [80, 63, 40, 20, 16, 12.5, 10, 4.75, 2.36],
+            limits: { 63: [100, 100], 40: [85, 100], 20: [0, 20], 10: [0, 5] }
+        },
+        'single_20': {
+            name: 'Single Sized: 20 mm',
+            group: 'Coarse Aggregates (Single Sized)',
+            type: 'coarse',
+            nominalSize: 20,
+            sieves: [40, 20, 16, 12.5, 10, 4.75, 2.36],
+            limits: { 40: [100, 100], 20: [85, 100], 10: [0, 20], 4.75: [0, 5] }
+        },
+        'single_16': {
+            name: 'Single Sized: 16 mm',
+            group: 'Coarse Aggregates (Single Sized)',
+            type: 'coarse',
+            nominalSize: 16,
+            sieves: [20, 16, 12.5, 10, 4.75, 2.36],
+            limits: { 20: [100, 100], 16: [85, 100], 10: [0, 30], 4.75: [0, 5] }
+        },
+        'single_12_5': {
+            name: 'Single Sized: 12.5 mm',
+            group: 'Coarse Aggregates (Single Sized)',
+            type: 'coarse',
+            nominalSize: 12.5,
+            sieves: [20, 16, 12.5, 10, 4.75, 2.36],
+            limits: { 16: [100, 100], 12.5: [85, 100], 10: [0, 45], 4.75: [0, 10] }
+        },
+        'single_10': {
+            name: 'Single Sized: 10 mm',
+            group: 'Coarse Aggregates (Single Sized)',
+            type: 'coarse',
+            nominalSize: 10,
+            sieves: [12.5, 10, 4.75, 2.36],
+            limits: { 12.5: [100, 100], 10: [85, 100], 4.75: [0, 20], 2.36: [0, 5] }
+        },
+        // --- COARSE: GRADED ---
+        'graded_40': {
+            name: 'Graded: 40 mm',
+            group: 'Coarse Aggregates (Graded)',
+            type: 'coarse',
+            nominalSize: 40,
+            sieves: [80, 63, 40, 20, 16, 12.5, 10, 4.75, 2.36],
+            limits: { 80: [100, 100], 40: [95, 100], 20: [30, 70], 10: [10, 35], 4.75: [0, 5] }
+        },
+        'graded_20': {
+            name: 'Graded: 20 mm',
+            group: 'Coarse Aggregates (Graded)',
+            type: 'coarse',
+            nominalSize: 20,
+            sieves: [40, 20, 16, 12.5, 10, 4.75, 2.36],
+            limits: { 40: [100, 100], 20: [95, 100], 10: [25, 55], 4.75: [0, 10] }
+        },
+        'graded_16': {
+            name: 'Graded: 16 mm',
+            group: 'Coarse Aggregates (Graded)',
+            type: 'coarse',
+            nominalSize: 16,
+            sieves: [20, 16, 12.5, 10, 4.75, 2.36],
+            limits: { 20: [100, 100], 16: [90, 100], 10: [30, 70], 4.75: [0, 10] }
+        },
+        'graded_12_5': {
+            name: 'Graded: 12.5 mm',
+            group: 'Coarse Aggregates (Graded)',
+            type: 'coarse',
+            nominalSize: 12.5,
+            sieves: [20, 16, 12.5, 10, 4.75, 2.36],
+            limits: { 20: [100, 100], 12.5: [90, 100], 10: [40, 85], 4.75: [0, 10] }
+        },
+        // --- FINE AGGREGATES ---
+        'fine_zone_1': {
+            name: 'Zone I',
+            group: 'Fine Aggregates',
+            type: 'fine',
+            nominalSize: 4.75,
+            sieves: [10, 4.75, 2.36, 1.18, 0.6, 0.3, 0.15],
+            limits: { 10: [100, 100], 4.75: [90, 100], 2.36: [60, 95], 1.18: [30, 70], 0.6: [15, 34], 0.3: [5, 20], 0.15: [0, 10] }
+        },
+        'fine_zone_2': {
+            name: 'Zone II',
+            group: 'Fine Aggregates',
+            type: 'fine',
+            nominalSize: 4.75,
+            sieves: [10, 4.75, 2.36, 1.18, 0.6, 0.3, 0.15],
+            limits: { 10: [100, 100], 4.75: [90, 100], 2.36: [75, 100], 1.18: [55, 90], 0.6: [35, 59], 0.3: [8, 30], 0.15: [0, 10] }
+        },
+        'fine_zone_3': {
+            name: 'Zone III',
+            group: 'Fine Aggregates',
+            type: 'fine',
+            nominalSize: 4.75,
+            sieves: [10, 4.75, 2.36, 1.18, 0.6, 0.3, 0.15],
+            limits: { 10: [100, 100], 4.75: [90, 100], 2.36: [85, 100], 1.18: [75, 100], 0.6: [60, 79], 0.3: [12, 40], 0.15: [0, 10] }
+        },
+        'fine_zone_4': {
+            name: 'Zone IV',
+            group: 'Fine Aggregates',
+            type: 'fine',
+            nominalSize: 4.75,
+            sieves: [10, 4.75, 2.36, 1.18, 0.6, 0.3, 0.15],
+            limits: { 10: [100, 100], 4.75: [95, 100], 2.36: [95, 100], 1.18: [90, 100], 0.6: [80, 100], 0.3: [15, 50], 0.15: [0, 15] }
+        }
+    };
+
+    const StatusBadge = ({ pass, label }) => {
+        if (pass === null) return <span className="text-gray-400">-</span>;
+        return (
+            <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${pass ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                {pass ? <CheckCircle className="w-3 h-3 mr-1" /> : <AlertCircle className="w-3 h-3 mr-1" />}
+                {label || (pass ? 'Pass' : 'Fail')}
+            </span>
         );
+    };
 
-        const CheckCircle = ({ className }) => (
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline>
-            </svg>
-        );
+    // --- MAIN APPLICATION COMPONENT ---
 
-        const RefreshCw = ({ className }) => (
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-                <polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
-            </svg>
-        );
-
-        const Calculator = ({ className }) => (
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-                <rect x="4" y="2" width="16" height="20" rx="2"></rect><line x1="8" y1="6" x2="16" y2="6"></line><line x1="16" y1="14" x2="16" y2="14"></line><line x1="12" y1="14" x2="12" y2="14"></line><line x1="8" y1="14" x2="8" y2="14"></line><line x1="16" y1="18" x2="16" y2="18"></line><line x1="12" y1="18" x2="12" y2="18"></line><line x1="8" y1="18" x2="8" y2="18"></line>
-            </svg>
-        );
-
-        const FileText = ({ className }) => (
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline>
-            </svg>
-        );
+    function SieveAnalysisApp() {
+        const [specKey, setSpecKey] = useState('graded_20'); 
+        const [weights, setWeights] = useState({});
+        const [panWeight, setPanWeight] = useState(0);
         
-        const DownloadIcon = ({ className }) => (
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line>
-            </svg>
-        );
+        // New State for Sieve Diameter (0 = 45cm, 1 = 30cm)
+        const [sieveDiameterIdx, setSieveDiameterIdx] = useState(0); 
+        
+        // NEW STATE FOR REFERENCE NUMBER
+        const [refNo, setRefNo] = useState(''); 
 
-        const Info = ({ className }) => (
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-                <circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>
-            </svg>
-        );
-
-        // --- CONSTANTS & SPECIFICATIONS ---
-
-        const SIEVES = [
-            { id: 80, label: '80 mm', isStandard: true },
-            { id: 63, label: '63 mm', isStandard: false },
-            { id: 40, label: '40 mm', isStandard: true },
-            { id: 20, label: '20 mm', isStandard: true },
-            { id: 16, label: '16 mm', isStandard: false },
-            { id: 12.5, label: '12.5 mm', isStandard: false },
-            { id: 10, label: '10 mm', isStandard: true },
-            { id: 4.75, label: '4.75 mm', isStandard: true },
-            { id: 2.36, label: '2.36 mm', isStandard: true },
-            { id: 1.18, label: '1.18 mm', isStandard: true },
-            { id: 0.6, label: '600 micron', isStandard: true },
-            { id: 0.3, label: '300 micron', isStandard: true },
-            { id: 0.15, label: '150 micron', isStandard: true },
-        ];
-
-        // Table IV: Minimum Weight of Sample (IS 2386 Part 1)
-        const MIN_SAMPLE_WEIGHTS = {
-            63: 50000, // 50kg
-            40: 15000, // 15kg
-            20: 2000,  // 2kg
-            16: 2000,  // 2kg
-            12.5: 1000,// 1kg
-            10: 500,   // 0.5kg
-            4.75: 200  // 0.2kg (Fine Agg)
+        const [projectDetails, setProjectDetails] = useState({
+            projectName: 'Construction of New Block at CoEP',
+            description: 'Testing of Coarse Aggregate sample from quarry source for M30 grade concrete mix design.',
+            testDate: new Date().toISOString().split('T')[0] // Default to YYYY-MM-DD
+        });
+        
+        const handleSpecChange = (newKey) => {
+            setSpecKey(newKey);
+            // Reset sieve diameter to default (45cm) when changing spec, or keep logic
+            setSieveDiameterIdx(0);
         };
 
-        // Table III: Maximum Weight to be Retained (g) (IS 2386 Part 1)
-        // [0] = 45cm dia, [1] = 30cm dia.
-        const MAX_RETAINED_COARSE = {
-            40: [8000, 3500],
-            20: [4000, 2000],
-            16: [3000, 1500], 
-            12.5: [3000, 1500],
-            10: [2000, 1000],
-            4.75: [1000, 500]
-        };
+        const currentSpec = SPECS[specKey];
+        const sievesToShow = currentSpec.sieves.map(sId => SIEVES.find(s => s.id === sId));
 
-        // For 20cm dia sieve (Fine Aggregate)
-        const MAX_RETAINED_FINE = {
-            2.36: 200,
-            1.18: 100,
-            0.6: 75,
-            0.3: 50,
-            0.15: 40
-        };
+        // --- CALCULATIONS ---
 
-        const SPECS = {
-            // --- COARSE: SINGLE SIZED ---
-            'single_63': {
-                name: 'Single Sized: 63 mm',
-                group: 'Coarse Aggregates (Single Sized)',
-                type: 'coarse',
-                nominalSize: 63,
-                sieves: [80, 63, 40, 20, 16, 12.5, 10, 4.75, 2.36],
-                limits: { 80: [100, 100], 63: [85, 100], 40: [0, 30], 20: [0, 5], 10: [0, 5] }
-            },
-            'single_40': {
-                name: 'Single Sized: 40 mm',
-                group: 'Coarse Aggregates (Single Sized)',
-                type: 'coarse',
-                nominalSize: 40,
-                sieves: [80, 63, 40, 20, 16, 12.5, 10, 4.75, 2.36],
-                limits: { 63: [100, 100], 40: [85, 100], 20: [0, 20], 10: [0, 5] }
-            },
-            'single_20': {
-                name: 'Single Sized: 20 mm',
-                group: 'Coarse Aggregates (Single Sized)',
-                type: 'coarse',
-                nominalSize: 20,
-                sieves: [40, 20, 16, 12.5, 10, 4.75, 2.36],
-                limits: { 40: [100, 100], 20: [85, 100], 10: [0, 20], 4.75: [0, 5] }
-            },
-            'single_16': {
-                name: 'Single Sized: 16 mm',
-                group: 'Coarse Aggregates (Single Sized)',
-                type: 'coarse',
-                nominalSize: 16,
-                sieves: [20, 16, 12.5, 10, 4.75, 2.36],
-                limits: { 20: [100, 100], 16: [85, 100], 10: [0, 30], 4.75: [0, 5] }
-            },
-            'single_12_5': {
-                name: 'Single Sized: 12.5 mm',
-                group: 'Coarse Aggregates (Single Sized)',
-                type: 'coarse',
-                nominalSize: 12.5,
-                sieves: [20, 16, 12.5, 10, 4.75, 2.36],
-                limits: { 16: [100, 100], 12.5: [85, 100], 10: [0, 45], 4.75: [0, 10] }
-            },
-            'single_10': {
-                name: 'Single Sized: 10 mm',
-                group: 'Coarse Aggregates (Single Sized)',
-                type: 'coarse',
-                nominalSize: 10,
-                sieves: [12.5, 10, 4.75, 2.36],
-                limits: { 12.5: [100, 100], 10: [85, 100], 4.75: [0, 20], 2.36: [0, 5] }
-            },
-            // --- COARSE: GRADED ---
-            'graded_40': {
-                name: 'Graded: 40 mm',
-                group: 'Coarse Aggregates (Graded)',
-                type: 'coarse',
-                nominalSize: 40,
-                sieves: [80, 63, 40, 20, 16, 12.5, 10, 4.75, 2.36],
-                limits: { 80: [100, 100], 40: [95, 100], 20: [30, 70], 10: [10, 35], 4.75: [0, 5] }
-            },
-            'graded_20': {
-                name: 'Graded: 20 mm',
-                group: 'Coarse Aggregates (Graded)',
-                type: 'coarse',
-                nominalSize: 20,
-                sieves: [40, 20, 16, 12.5, 10, 4.75, 2.36],
-                limits: { 40: [100, 100], 20: [95, 100], 10: [25, 55], 4.75: [0, 10] }
-            },
-            'graded_16': {
-                name: 'Graded: 16 mm',
-                group: 'Coarse Aggregates (Graded)',
-                type: 'coarse',
-                nominalSize: 16,
-                sieves: [20, 16, 12.5, 10, 4.75, 2.36],
-                limits: { 20: [100, 100], 16: [90, 100], 10: [30, 70], 4.75: [0, 10] }
-            },
-            'graded_12_5': {
-                name: 'Graded: 12.5 mm',
-                group: 'Coarse Aggregates (Graded)',
-                type: 'coarse',
-                nominalSize: 12.5,
-                sieves: [20, 16, 12.5, 10, 4.75, 2.36],
-                limits: { 20: [100, 100], 12.5: [90, 100], 10: [40, 85], 4.75: [0, 10] }
-            },
-            // --- FINE AGGREGATES ---
-            'fine_zone_1': {
-                name: 'Zone I',
-                group: 'Fine Aggregates',
-                type: 'fine',
-                nominalSize: 4.75,
-                sieves: [10, 4.75, 2.36, 1.18, 0.6, 0.3, 0.15],
-                limits: { 10: [100, 100], 4.75: [90, 100], 2.36: [60, 95], 1.18: [30, 70], 0.6: [15, 34], 0.3: [5, 20], 0.15: [0, 10] }
-            },
-            'fine_zone_2': {
-                name: 'Zone II',
-                group: 'Fine Aggregates',
-                type: 'fine',
-                nominalSize: 4.75,
-                sieves: [10, 4.75, 2.36, 1.18, 0.6, 0.3, 0.15],
-                limits: { 10: [100, 100], 4.75: [90, 100], 2.36: [75, 100], 1.18: [55, 90], 0.6: [35, 59], 0.3: [8, 30], 0.15: [0, 10] }
-            },
-            'fine_zone_3': {
-                name: 'Zone III',
-                group: 'Fine Aggregates',
-                type: 'fine',
-                nominalSize: 4.75,
-                sieves: [10, 4.75, 2.36, 1.18, 0.6, 0.3, 0.15],
-                limits: { 10: [100, 100], 4.75: [90, 100], 2.36: [85, 100], 1.18: [75, 100], 0.6: [60, 79], 0.3: [12, 40], 0.15: [0, 10] }
-            },
-            'fine_zone_4': {
-                name: 'Zone IV',
-                group: 'Fine Aggregates',
-                type: 'fine',
-                nominalSize: 4.75,
-                sieves: [10, 4.75, 2.36, 1.18, 0.6, 0.3, 0.15],
-                limits: { 10: [100, 100], 4.75: [95, 100], 2.36: [95, 100], 1.18: [90, 100], 0.6: [80, 100], 0.3: [15, 50], 0.15: [0, 15] }
-            }
-        };
-
-        const StatusBadge = ({ pass, label }) => {
-            if (pass === null) return <span className="text-gray-400">-</span>;
-            return (
-                <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${pass ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                    {pass ? <CheckCircle className="w-3 h-3 mr-1" /> : <AlertCircle className="w-3 h-3 mr-1" />}
-                    {label || (pass ? 'Pass' : 'Fail')}
-                </span>
-            );
-        };
-
-        // --- MAIN APPLICATION COMPONENT ---
-
-        function SieveAnalysisApp() {
-            const [specKey, setSpecKey] = useState('graded_20'); 
-            const [weights, setWeights] = useState({});
-            const [panWeight, setPanWeight] = useState(0);
+        const calculationResults = useMemo(() => {
+            let totalWeight = parseFloat(panWeight) || 0;
             
-            // New State for Sieve Diameter (0 = 45cm, 1 = 30cm)
-            const [sieveDiameterIdx, setSieveDiameterIdx] = useState(0); 
-
-            const [projectDetails, setProjectDetails] = useState({
-                projectName: '',
-                description: '',
-                testDate: new Date().toISOString().split('T')[0] // Default to YYYY-MM-DD
+            // 1. Calculate Total Weight
+            sievesToShow.forEach(sieve => {
+                totalWeight += parseFloat(weights[sieve.id]) || 0;
             });
+
+            let runningCumulativeRetained = 0;
+            const rows = [];
+
+            // 2. Process each sieve row
+            sievesToShow.forEach(sieve => {
+                const retained = parseFloat(weights[sieve.id]) || 0;
+                const percentRetained = totalWeight > 0 ? (retained / totalWeight) * 100 : 0;
+                
+                runningCumulativeRetained += percentRetained;
+                const percentFiner = 100 - runningCumulativeRetained;
+
+                // Check Limits (IS 383)
+                const limit = currentSpec.limits[sieve.id];
+                let status = null;
+                let limitString = "-";
+                
+                if (limit) {
+                    limitString = `${limit[0]} - ${limit[1]}`;
+                    if (percentFiner >= (limit[0] - 0.01) && percentFiner <= (limit[1] + 0.01)) {
+                        status = true;
+                    } else {
+                        status = false;
+                    }
+                }
+
+                // Check Overloading (IS 2386 Part 1 - Table III)
+                let maxRetained = null;
+                let isOverloaded = false;
+
+                if (currentSpec.type === 'coarse') {
+                    // Use MAX_RETAINED_COARSE based on sieveDiameterIdx
+                    if (MAX_RETAINED_COARSE[sieve.id]) {
+                        maxRetained = MAX_RETAINED_COARSE[sieve.id][sieveDiameterIdx];
+                    }
+                } else {
+                    // Fine Aggregates (Assume 20cm standard)
+                    if (MAX_RETAINED_FINE[sieve.id]) {
+                        maxRetained = MAX_RETAINED_FINE[sieve.id];
+                    }
+                }
+
+                if (maxRetained !== null && retained > maxRetained) {
+                    isOverloaded = true;
+                }
+
+                rows.push({
+                    sieve,
+                    retained,
+                    percentRetained,
+                    cumulativeRetained: runningCumulativeRetained,
+                    percentFiner: Math.max(0, percentFiner),
+                    limitString,
+                    status,
+                    isOverloaded,
+                    maxRetained
+                });
+            });
+
+            // Min Sample Size Check (IS 2386 Part 1 - Table IV)
+            const minSampleWeight = MIN_SAMPLE_WEIGHTS[currentSpec.nominalSize] || 0;
+            const isSampleWeightSufficient = totalWeight >= minSampleWeight;
+
+            return { totalWeight, rows, minSampleWeight, isSampleWeightSufficient };
+        }, [weights, panWeight, sievesToShow, currentSpec, sieveDiameterIdx]);
+
+        const finenessModulus = useMemo(() => {
+            const standardSieveIds = [80, 40, 20, 10, 4.75, 2.36, 1.18, 0.6, 0.3, 0.15];
+            let sumCumulative = 0;
+
+            const cumulativeMap = {};
+            calculationResults.rows.forEach(r => {
+                cumulativeMap[r.sieve.id] = r.cumulativeRetained;
+            });
+
+            const finestTestedId = calculationResults.rows.length > 0 
+                ? calculationResults.rows[calculationResults.rows.length - 1].sieve.id 
+                : 0;
+
+            standardSieveIds.forEach(id => {
+                if (cumulativeMap[id] !== undefined) {
+                    sumCumulative += cumulativeMap[id];
+                } else {
+                    if (id < finestTestedId && currentSpec.type === 'coarse') {
+                        sumCumulative += 100;
+                    }
+                }
+            });
+
+            return (sumCumulative / 100).toFixed(2);
+        }, [calculationResults, currentSpec]);
+
+        // --- PDF GENERATION ---
+        const generatePDF = () => {
+            const doc = new jsPDF();
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const pageHeight = doc.internal.pageSize.getHeight();
+            const margin = 14;
+            const contentWidth = pageWidth - (2 * margin);
+            const detailLineHeight = 5; // Consistent line height for details section
+            const labelWidth = 30; // Consistent label width for details section (e.g., "Project Name:")
             
-            const handleSpecChange = (newKey) => {
-                setSpecKey(newKey);
-                // Reset sieve diameter to default (45cm) when changing spec, or keep logic
-                setSieveDiameterIdx(0);
-            };
+            // Date format for PDF content (DD-MM-YYYY)
+            const formattedDate = formatDateDDMMYYYY(projectDetails.testDate);
 
-            const currentSpec = SPECS[specKey];
-            const sievesToShow = currentSpec.sieves.map(sId => SIEVES.find(s => s.id === sId));
+            // 1. CUSTOM HEADER BLOCK
+            doc.setFontSize(11);
+            doc.setTextColor(0, 0, 0);
+            doc.setFont("helvetica", "bold");
+            
+            const headerLines = [
+                "COLLEGE OF ENGINEERING PATHANAPURAM",
+                "CAPE, Govt of Kerala",
+                "Elikkatoor P.O, Kollam, Kerala Pin 689696",
+                "Phone : 0475-2022810, FAX: 0475-2225959",
+                "MATERIAL TESTING LABORATORY-II"
+            ];
+            
+            let currentY = 15;
+            headerLines.forEach(line => {
+                doc.text(line, pageWidth / 2, currentY, { align: 'center' });
+                currentY += 5; // Spacing
+            });
 
-            // --- CALCULATIONS ---
+            // Separator Line
+            currentY += 2; // Reduced gap
+            doc.line(margin, currentY, pageWidth - margin, currentY); 
+            
+            // 2. CAPTION
+            currentY += 7; // Spacing
+            doc.setFontSize(14);
+            doc.text("SIEVE ANALYSIS", pageWidth / 2, currentY, { align: 'center' });
+            
+            // 3. REF NO AND DATE
+            currentY += 7;
+            doc.setFontSize(10);
+            doc.setFont("helvetica", "bold");
+            doc.text(`Ref. No: ${refNo || '-'}`, margin, currentY); // Left aligned
+            doc.text(`Date: ${formattedDate}`, pageWidth - margin, currentY, { align: 'right' }); // Right aligned
+            
+            // 4. REFERENCE STANDARDS (Wrapped and Full Width)
+            currentY += 7; 
+            doc.setFontSize(9);
+            doc.setFont("helvetica", "normal");
+            doc.setTextColor(80, 80, 80);
+            const refText = 'References: Conducted as per Indian Standard Specification IS : 2386 ( Part I ) - 1963 (Methods of test for aggregates for concrete) and IS : 383 - 1970 (Specifications for Coarse and Fine Aggregates from Natural Sources for Concrete)';
+            
+            // Split the long text to fit within the content width
+            const splitRefText = doc.splitTextToSize(refText, contentWidth);
+            doc.text(splitRefText, margin, currentY);
+            currentY += (splitRefText.length * 4) + 2; // Move Y down based on number of lines + buffer
 
-            const calculationResults = useMemo(() => {
-                let totalWeight = parseFloat(panWeight) || 0;
-                
-                // 1. Calculate Total Weight
-                sievesToShow.forEach(sieve => {
-                    totalWeight += parseFloat(weights[sieve.id]) || 0;
-                });
+            doc.setTextColor(0, 0, 0); // Reset color
+            
+            // --- 5. TEST DETAILS SECTION (Modified to be full width and sequential) ---
+            let detailY = currentY + 3; 
+            doc.setFontSize(10);
 
-                let runningCumulativeRetained = 0;
-                const rows = [];
+            // Project Name (Full Width)
+            doc.setFont("helvetica", "bold");
+            doc.text(`Project Name:`, margin, detailY);
+            doc.setFont("helvetica", "normal");
+            const projectNameText = projectDetails.projectName || '-';
+            // Use width minus label width for content
+            const splitProjectName = doc.splitTextToSize(projectNameText, contentWidth - labelWidth - 2); 
+            doc.text(splitProjectName, margin + labelWidth, detailY);
+            detailY += (splitProjectName.length * detailLineHeight);
 
-                // 2. Process each sieve row
-                sievesToShow.forEach(sieve => {
-                    const retained = parseFloat(weights[sieve.id]) || 0;
-                    const percentRetained = totalWeight > 0 ? (retained / totalWeight) * 100 : 0;
-                    
-                    runningCumulativeRetained += percentRetained;
-                    const percentFiner = 100 - runningCumulativeRetained;
+            // Description of Work (Full Width)
+            doc.setFont("helvetica", "bold");
+            doc.text(`Description:`, margin, detailY);
+            doc.setFont("helvetica", "normal");
+            const descriptionText = projectDetails.description || '-';
+            // Use width minus label width for content
+            const splitDescription = doc.splitTextToSize(descriptionText, contentWidth - labelWidth + 8); 
+            doc.text(splitDescription, margin + 23, detailY);
+            detailY += (splitDescription.length * detailLineHeight);
+            
+            // Aggregate Type (Single line)
+            doc.setFont("helvetica", "bold");
+            doc.text(`Aggregate Type:`, margin, detailY);
+            doc.setFont("helvetica", "normal");
+            doc.text(`${currentSpec.name}`, margin + 30, detailY);
+            detailY += detailLineHeight;
 
-                    // Check Limits (IS 383)
-                    const limit = currentSpec.limits[sieve.id];
-                    let status = null;
-                    let limitString = "-";
-                    
-                    if (limit) {
-                        limitString = `${limit[0]} - ${limit[1]}`;
-                        if (percentFiner >= (limit[0] - 0.01) && percentFiner <= (limit[1] + 0.01)) {
-                            status = true;
-                        } else {
-                            status = false;
-                        }
-                    }
-
-                    // Check Overloading (IS 2386 Part 1 - Table III)
-                    let maxRetained = null;
-                    let isOverloaded = false;
-
-                    if (currentSpec.type === 'coarse') {
-                        // Use MAX_RETAINED_COARSE based on sieveDiameterIdx
-                        if (MAX_RETAINED_COARSE[sieve.id]) {
-                            maxRetained = MAX_RETAINED_COARSE[sieve.id][sieveDiameterIdx];
-                        }
-                    } else {
-                        // Fine Aggregates (Assume 20cm standard)
-                        if (MAX_RETAINED_FINE[sieve.id]) {
-                            maxRetained = MAX_RETAINED_FINE[sieve.id];
-                        }
-                    }
-
-                    if (maxRetained !== null && retained > maxRetained) {
-                        isOverloaded = true;
-                    }
-
-                    rows.push({
-                        sieve,
-                        retained,
-                        percentRetained,
-                        cumulativeRetained: runningCumulativeRetained,
-                        percentFiner: Math.max(0, percentFiner),
-                        limitString,
-                        status,
-                        isOverloaded,
-                        maxRetained
-                    });
-                });
-
-                // Min Sample Size Check (IS 2386 Part 1 - Table IV)
-                const minSampleWeight = MIN_SAMPLE_WEIGHTS[currentSpec.nominalSize] || 0;
-                const isSampleWeightSufficient = totalWeight >= minSampleWeight;
-
-                return { totalWeight, rows, minSampleWeight, isSampleWeightSufficient };
-            }, [weights, panWeight, sievesToShow, currentSpec, sieveDiameterIdx]);
-
-            const finenessModulus = useMemo(() => {
-                const standardSieveIds = [80, 40, 20, 10, 4.75, 2.36, 1.18, 0.6, 0.3, 0.15];
-                let sumCumulative = 0;
-
-                const cumulativeMap = {};
-                calculationResults.rows.forEach(r => {
-                    cumulativeMap[r.sieve.id] = r.cumulativeRetained;
-                });
-
-                const finestTestedId = calculationResults.rows.length > 0 
-                    ? calculationResults.rows[calculationResults.rows.length - 1].sieve.id 
-                    : 0;
-
-                standardSieveIds.forEach(id => {
-                    if (cumulativeMap[id] !== undefined) {
-                        sumCumulative += cumulativeMap[id];
-                    } else {
-                        if (id < finestTestedId && currentSpec.type === 'coarse') {
-                            sumCumulative += 100;
-                        }
-                    }
-                });
-
-                return (sumCumulative / 100).toFixed(2);
-            }, [calculationResults, currentSpec]);
-
-            // --- PDF GENERATION ---
-            const generatePDF = () => {
-                const doc = new jsPDF();
-                const pageWidth = doc.internal.pageSize.getWidth();
-                const pageHeight = doc.internal.pageSize.getHeight();
-                
-                // Date format for PDF content (DD-MM-YYYY)
-                const formattedDate = formatDateDDMMYYYY(projectDetails.testDate);
-
-                // 1. Title & Reference
-                doc.setFontSize(16);
-                doc.setTextColor(0, 0, 0);
-                doc.text('Sieve Analysis Report', pageWidth / 2, 15, { align: 'center' });
-                
-                doc.setFontSize(10);
-                doc.setTextColor(80, 80, 80);
-                doc.text('References: IS : 2386 ( Part I ) - 1963 and IS : 383 - 1970', pageWidth / 2, 22, { align: 'center' });
-
-                // 2. Project Details Section
-                doc.setFontSize(11);
-                doc.setTextColor(0, 0, 0);
+            // Sieve Diameter (if coarse) (Single line)
+            if(currentSpec.type === 'coarse') {
                 doc.setFont("helvetica", "bold");
-                doc.text("Project Details:", 14, 35);
-                
+                doc.text(`Sieve Diameter Used:`, margin, detailY);
                 doc.setFont("helvetica", "normal");
-                doc.setFontSize(10);
-                doc.text(`Project Name: ${projectDetails.projectName || '-'}`, 14, 42);
-                doc.text(`Date of Testing: ${formattedDate || '-'}`, 14, 47); // Use DD-MM-YYYY format
-                doc.text(`Description: ${projectDetails.description || '-'}`, 14, 52);
-                doc.text(`Aggregate Type: ${currentSpec.name}`, 14, 57);
-                
-                if(currentSpec.type === 'coarse') {
-                    doc.text(`Sieve Diameter Used: ${sieveDiameterIdx === 0 ? '45 cm' : '30 cm'}`, 14, 62);
-                }
+                doc.text(`${sieveDiameterIdx === 0 ? '45 cm' : '30 cm'}`, margin + 38, detailY);
+                detailY += detailLineHeight;
+            }
 
-                // 3. IS 2386 (Part I) Check Summary
-                doc.setFont("helvetica", "bold");
-                doc.text("IS 2386 (Part I) Checks:", 120, 35);
-                doc.setFont("helvetica", "normal");
-                
-                // Sample Size Check
-                const sampleStatus = calculationResults.isSampleWeightSufficient ? "Pass" : "Fail";
-                doc.text(`Min Sample Wt. Required: ${(calculationResults.minSampleWeight/1000).toFixed(1)} kg`, 120, 42);
-                doc.text(`Actual Sample Wt.: ${(calculationResults.totalWeight/1000).toFixed(3)} kg`, 120, 47);
-                
-                if (!calculationResults.isSampleWeightSufficient) {
-                    doc.setTextColor(220, 38, 38); // Red
-                    doc.text(`Sample Size Status: ${sampleStatus}`, 120, 52);
-                } else {
-                    doc.setTextColor(22, 163, 74); // Green
-                    doc.text(`Sample Size Status: ${sampleStatus}`, 120, 52);
-                }
-                doc.setTextColor(0, 0, 0);
 
-                // Overloading Check Summary
-                const overloadedSieves = calculationResults.rows.filter(r => r.isOverloaded);
-                if (overloadedSieves.length > 0) {
-                    doc.setTextColor(220, 38, 38);
-                    doc.text(`Warning: ${overloadedSieves.length} sieve(s) overloaded!`, 120, 57);
-                } else {
-                    doc.setTextColor(22, 163, 74);
-                    doc.text(`Sieve Capacity: OK`, 120, 57);
-                }
-                doc.setTextColor(0, 0, 0);
+            // --- 6. IS 2386 (Part I) Check Summary (REMOVED from PDF as requested by user) ---
 
-                // 4. Table
-                const tableBody = calculationResults.rows.map(row => [
-                    row.sieve.label,
-                    (weights[row.sieve.id] || 0),
-                    row.maxRetained ? row.maxRetained : '-', // Max allowed
-                    row.percentRetained.toFixed(2),
-                    row.cumulativeRetained.toFixed(2),
-                    row.percentFiner.toFixed(2),
-                    row.limitString,
-                    row.status === true ? 'Pass' : (row.status === false ? 'FAIL' : '-')
-                ]);
+            // Determine Y position for the table to start below all details
+            let tableStartY = detailY + 8; // Start the table after the details
 
-                tableBody.push(['Pan', (panWeight || 0), '-', '-', '-', '-', '-', '-']);
-                tableBody.push(['Total', calculationResults.totalWeight, '-', '100%', '-', '-', '-', '-']);
 
-                doc.autoTable({
-                    startY: 70,
-                    head: [['Sieve', 'Wt. Ret (g)', 'Max Allow (g)', '% Ret', 'Cum %', '% Finer', 'Limits', 'Status']],
-                    body: tableBody,
-                    theme: 'grid',
-                    headStyles: { fillColor: [29, 78, 216], textColor: 255 },
-                    styles: { fontSize: 9, cellPadding: 2 },
-                    didParseCell: function(data) {
-                        // Highlight Overloaded Weights
-                        if (data.section === 'body' && data.column.index === 1) {
-                             const rowIndex = data.row.index;
-                             if (rowIndex < calculationResults.rows.length) {
-                                 if (calculationResults.rows[rowIndex].isOverloaded) {
-                                     data.cell.styles.fillColor = [254, 240, 138]; // Yellow/Orange bg
-                                     data.cell.styles.textColor = [180, 83, 9];
-                                 }
+            // 7. Table
+            const tableBody = calculationResults.rows.map(row => [
+                row.sieve.label,
+                (weights[row.sieve.id] || 0),
+                row.maxRetained ? row.maxRetained : '-', // Max allowed
+                row.percentRetained.toFixed(2),
+                row.cumulativeRetained.toFixed(2),
+                row.percentFiner.toFixed(2),
+                row.limitString,
+                row.status === true ? 'Pass' : (row.status === false ? 'FAIL' : '-')
+            ]);
+
+            tableBody.push(['Pan', (panWeight || 0), '-', '-', '-', '-', '-', '-']);
+            tableBody.push(['Total', calculationResults.totalWeight, '-', '100%', '-', '-', '-', '-']);
+
+            doc.autoTable({
+                startY: tableStartY,
+                head: [['Sieve', 'Wt. Ret (g)', 'Max Allow (g)', '% Ret', 'Cum %', '% Finer', 'Limits', 'Status']],
+                body: tableBody,
+                theme: 'grid',
+                headStyles: { fillColor: [29, 78, 216], textColor: 255 },
+                styles: { fontSize: 9, cellPadding: 2 },
+                didParseCell: function(data) {
+                    // Highlight Overloaded Weights
+                    if (data.section === 'body' && data.column.index === 1) {
+                         const rowIndex = data.row.index;
+                         if (rowIndex < calculationResults.rows.length) {
+                             if (calculationResults.rows[rowIndex].isOverloaded) {
+                                 data.cell.styles.fillColor = [254, 240, 138]; // Yellow/Orange bg
+                                 data.cell.styles.textColor = [180, 83, 9];
                              }
-                        }
-                        // Highlight Status
-                        if (data.section === 'body' && data.column.index === 7) {
-                            if (data.cell.raw === 'FAIL') {
-                                data.cell.styles.textColor = [220, 38, 38];
-                                data.cell.styles.fontStyle = 'bold';
-                            } else if (data.cell.raw === 'Pass') {
-                                data.cell.styles.textColor = [22, 163, 74];
-                            }
+                         }
+                    }
+                    // Highlight Status
+                    if (data.section === 'body' && data.column.index === 7) {
+                        if (data.cell.raw === 'FAIL') {
+                            data.cell.styles.textColor = [220, 38, 38];
+                            data.cell.styles.fontStyle = 'bold';
+                        } else if (data.cell.raw === 'Pass') {
+                            data.cell.styles.textColor = [22, 163, 74];
                         }
                     }
-                });
+                }
+            });
 
-                // 5. Final Results
-                const finalY = doc.lastAutoTable.finalY + 15;
-                
-                doc.setFontSize(12);
-                doc.setFont("helvetica", "bold");
-                doc.text("Results Summary:", 14, finalY);
+            // 8. Final Results
+            const finalY = doc.lastAutoTable.finalY + 15;
+            
+            doc.setFontSize(12);
+            doc.setFont("helvetica", "bold");
+            doc.text("Results Summary:", margin, finalY);
 
-                doc.setFontSize(11);
-                doc.setFont("helvetica", "normal");
-                
-                doc.text(`Fineness Modulus: ${finenessModulus}`, 14, finalY + 8);
-                
-                const overallStatus = calculationResults.rows.some(r => r.status === false);
-                const statusText = overallStatus ? "DOES NOT CONFORM to IS 383 Specifications." : "CONFORMS to IS 383 Specifications.";
-                
-                doc.text(`Conclusion: ${statusText}`, 14, finalY + 16);
-                if(overallStatus) doc.setTextColor(220, 38, 38);
-                else doc.setTextColor(22, 163, 74);
-                
-                // 6. Footer
-                doc.setFontSize(8);
-                doc.setTextColor(100, 100, 100);
-                doc.text("Prepared using Sieve Analysis Calculator", pageWidth / 2, pageHeight - 10, { align: 'center' });
+            doc.setFontSize(11);
+            doc.setFont("helvetica", "normal");
+            
+            doc.text(`Fineness Modulus: ${finenessModulus}`, margin, finalY + 8);
+            
+            const overallStatus = calculationResults.rows.some(r => r.status === false);
+            const statusText = overallStatus ? "DOES NOT CONFORM to IS 383 Specifications." : "CONFORMS to IS 383 Specifications.";
+            
+            doc.text(`Conclusion: ${statusText}`, margin, finalY + 16);
+            if(overallStatus) doc.setTextColor(220, 38, 38);
+            else doc.setTextColor(22, 163, 74);
+            
+            // 9. Footer
+            doc.setFontSize(8);
+            doc.setTextColor(100, 100, 100);
+            doc.text("Prepared using Sieve Analysis Calculator", pageWidth / 2, pageHeight - 10, { align: 'center' }); 
 
-                // Generate filename in YYYY-MM-DD format
-                const fileNameDate = projectDetails.testDate || new Date().toISOString().split('T')[0];
-                const fileName = `${projectDetails.projectName || 'sieve_analysis'}_${fileNameDate}_report.pdf`;
-                doc.save(fileName);
-            };
+            // Generate filename in YYYY-MM-DD format with sanitation
+            const fileNameDate = projectDetails.testDate || new Date().toISOString().split('T')[0];
+            // Sanitize project name: remove illegal characters and replace spaces with underscores.
+            const sanitizedProjectName = (projectDetails.projectName || 'sieve_analysis').replace(/[^a-zA-Z0-9_\s]/g, '').trim().replace(/\s+/g, '_');
+            const fileName = `${sanitizedProjectName}_${fileNameDate}_report.pdf`;
+            doc.save(fileName);
+        };
 
 
-            return (
-                <div className="min-h-screen font-sans pb-20">
-                    {/* Header */}
-                    <header className="bg-blue-700 text-white p-4 shadow-lg sticky top-0 z-10">
-                        <div className="max-w-4xl mx-auto flex flex-row justify-between items-center">
-                            <div className="flex items-center gap-2">
-                                <Calculator className="w-6 h-6" />
-                                <div>
-                                    <h1 className="text-xl font-bold leading-tight">Sieve Analysis Calculator</h1>
-                                    <p className="text-[10px] opacity-80 hidden md:block">Aggregate Gradation & Sieve Analysis</p>
-                                </div>
+        return (
+            <div className="min-h-screen font-sans pb-20">
+                {/* Header */}
+                <header className="bg-blue-700 text-white p-4 shadow-lg sticky top-0 z-10">
+                    <div className="max-w-4xl mx-auto flex flex-row justify-between items-center">
+                        <div className="flex items-center gap-2">
+                            <Calculator className="w-6 h-6" />
+                            <div>
+                                <h1 className="text-xl font-bold leading-tight">Sieve Analysis Calculator</h1>
+                                <p className="text-[10px] opacity-80 hidden md:block">Aggregate Gradation & Sieve Analysis</p>
                             </div>
-                            <button 
-                                onClick={generatePDF}
-                                className="bg-white text-blue-700 hover:bg-blue-50 px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 transition-colors shadow-sm"
-                            >
-                                <DownloadIcon className="w-4 h-4" />
-                                <span className="hidden sm:inline">Download Report</span>
-                                <span className="sm:hidden">PDF</span>
-                            </button>
                         </div>
-                    </header>
+                        <button 
+                            onClick={generatePDF}
+                            className="bg-white text-blue-700 hover:bg-blue-50 px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 transition-colors shadow-sm"
+                        >
+                            <DownloadIcon className="w-4 h-4" />
+                            <span className="hidden sm:inline">Download Report</span>
+                            <span className="sm:hidden">PDF</span>
+                        </button>
+                    </div>
+                </header>
 
-                    <main className="max-w-4xl mx-auto p-4 space-y-6">
-                        
-                        {/* Project Details */}
-                        <section className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 md:p-6 space-y-4">
-                            <h2 className="text-lg font-bold text-slate-800 border-b border-slate-100 pb-2 flex items-center gap-2">
-                                <FileText className="w-5 h-5 text-blue-600" />
-                                Project Information
-                            </h2>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-semibold text-slate-700 mb-1">Name of Project</label>
-                                    <input 
-                                        type="text" 
-                                        className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                                        value={projectDetails.projectName}
-                                        onChange={e => setProjectDetails({...projectDetails, projectName: e.target.value})}
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-semibold text-slate-700 mb-1">Date of Testing</label>
-                                    <input 
-                                        type="date" 
-                                        className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                                        value={projectDetails.testDate}
-                                        onChange={e => setProjectDetails({...projectDetails, testDate: e.target.value})}
-                                    />
-                                </div>
-                                <div className="md:col-span-2">
-                                    <label className="block text-sm font-semibold text-slate-700 mb-1">Description of Work</label>
-                                    <textarea 
-                                        className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                                        rows="2"
-                                        value={projectDetails.description}
-                                        onChange={e => setProjectDetails({...projectDetails, description: e.target.value})}
-                                    />
+                <main className="max-w-4xl mx-auto p-4 space-y-6">
+                    
+                    {/* Project Details */}
+                    <section className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 md:p-6 space-y-4">
+                        <h2 className="text-lg font-bold text-slate-800 border-b border-slate-100 pb-2 flex items-center gap-2">
+                            <FileText className="w-5 h-5 text-blue-600" />
+                            Project Information
+                        </h2>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label className="block text-sm font-semibold text-slate-700 mb-1">Name of Project</label>
+                                <input 
+                                    type="text" 
+                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                                    value={projectDetails.projectName}
+                                    onChange={e => setProjectDetails({...projectDetails, projectName: e.target.value})}
+                                />
+                            </div>
+                            {/* NEW INPUT FIELD FOR REF. NO */}
+                            <div>
+                                <label className="block text-sm font-semibold text-slate-700 mb-1">Ref. No:</label>
+                                <input 
+                                    type="text" 
+                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                                    value={refNo}
+                                    onChange={e => setRefNo(e.target.value)}
+                                />
+                            </div>
+                            {/* END NEW INPUT FIELD */}
+                            <div>
+                                <label className="block text-sm font-semibold text-slate-700 mb-1">Date of Testing</label>
+                                <input 
+                                    type="date" 
+                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                                    value={projectDetails.testDate}
+                                    onChange={e => setProjectDetails({...projectDetails, testDate: e.target.value})}
+                                />
+                            </div>
+                            <div className="md:col-span-3">
+                                <label className="block text-sm font-semibold text-slate-700 mb-1">Description of Work</label>
+                                <textarea 
+                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                                    rows="2"
+                                    value={projectDetails.description}
+                                    onChange={e => setProjectDetails({...projectDetails, description: e.target.value})}
+                                />
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* Configuration & IS 2386 Checks */}
+                    <section className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 md:p-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                    Select Aggregate Type
+                                </label>
+                                <div className="relative">
+                                    <select 
+                                        value={specKey}
+                                        onChange={(e) => handleSpecChange(e.target.value)}
+                                        className="w-full p-3 bg-slate-50 border border-slate-300 rounded-lg appearance-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all font-medium text-slate-700"
+                                    >
+                                        <optgroup label="Coarse Aggregates (Graded)">
+                                            {Object.entries(SPECS).filter(([_, s]) => s.group === 'Coarse Aggregates (Graded)').map(([key, spec]) => (
+                                                <option key={key} value={key}>{spec.name}</option>
+                                            ))}
+                                        </optgroup>
+                                        <optgroup label="Coarse Aggregates (Single Sized)">
+                                            {Object.entries(SPECS).filter(([_, s]) => s.group === 'Coarse Aggregates (Single Sized)').map(([key, spec]) => (
+                                                <option key={key} value={key}>{spec.name}</option>
+                                            ))}
+                                        </optgroup>
+                                        <optgroup label="Fine Aggregates">
+                                            {Object.entries(SPECS).filter(([_, s]) => s.group === 'Fine Aggregates').map(([key, spec]) => (
+                                                <option key={key} value={key}>{spec.name}</option>
+                                            ))}
+                                        </optgroup>
+                                    </select>
+                                    <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                                        <svg className="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                                    </div>
                                 </div>
                             </div>
-                        </section>
 
-                        {/* Configuration & IS 2386 Checks */}
-                        <section className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 md:p-6">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {currentSpec.type === 'coarse' && (
                                 <div>
                                     <label className="block text-sm font-semibold text-slate-700 mb-2">
-                                        Select Aggregate Type
+                                        Sieve Diameter (for Overloading Check)
                                     </label>
-                                    <div className="relative">
-                                        <select 
-                                            value={specKey}
-                                            onChange={(e) => handleSpecChange(e.target.value)}
-                                            className="w-full p-3 bg-slate-50 border border-slate-300 rounded-lg appearance-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all font-medium text-slate-700"
+                                    <div className="flex gap-2">
+                                        <button 
+                                            onClick={() => setSieveDiameterIdx(0)}
+                                            className={`flex-1 py-3 rounded-lg border text-sm font-medium transition-all ${sieveDiameterIdx === 0 ? 'bg-blue-50 border-blue-500 text-blue-700' : 'bg-white border-slate-300 text-slate-600'}`}
                                         >
-                                            <optgroup label="Coarse Aggregates (Graded)">
-                                                {Object.entries(SPECS).filter(([_, s]) => s.group === 'Coarse Aggregates (Graded)').map(([key, spec]) => (
-                                                    <option key={key} value={key}>{spec.name}</option>
-                                                ))}
-                                            </optgroup>
-                                            <optgroup label="Coarse Aggregates (Single Sized)">
-                                                {Object.entries(SPECS).filter(([_, s]) => s.group === 'Coarse Aggregates (Single Sized)').map(([key, spec]) => (
-                                                    <option key={key} value={key}>{spec.name}</option>
-                                                ))}
-                                            </optgroup>
-                                            <optgroup label="Fine Aggregates">
-                                                {Object.entries(SPECS).filter(([_, s]) => s.group === 'Fine Aggregates').map(([key, spec]) => (
-                                                    <option key={key} value={key}>{spec.name}</option>
-                                                ))}
-                                            </optgroup>
-                                        </select>
-                                        <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
-                                            <svg className="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
-                                        </div>
+                                            45 cm
+                                        </button>
+                                        <button 
+                                            onClick={() => setSieveDiameterIdx(1)}
+                                            className={`flex-1 py-3 rounded-lg border text-sm font-medium transition-all ${sieveDiameterIdx === 1 ? 'bg-blue-50 border-blue-500 text-blue-700' : 'bg-white border-slate-300 text-slate-600'}`}
+                                        >
+                                            30 cm
+                                        </button>
                                     </div>
                                 </div>
+                            )}
+                        </div>
 
-                                {currentSpec.type === 'coarse' && (
-                                    <div>
-                                        <label className="block text-sm font-semibold text-slate-700 mb-2">
-                                            Sieve Diameter (for Overloading Check)
-                                        </label>
-                                        <div className="flex gap-2">
-                                            <button 
-                                                onClick={() => setSieveDiameterIdx(0)}
-                                                className={`flex-1 py-3 rounded-lg border text-sm font-medium transition-all ${sieveDiameterIdx === 0 ? 'bg-blue-50 border-blue-500 text-blue-700' : 'bg-white border-slate-300 text-slate-600'}`}
-                                            >
-                                                45 cm
-                                            </button>
-                                            <button 
-                                                onClick={() => setSieveDiameterIdx(1)}
-                                                className={`flex-1 py-3 rounded-lg border text-sm font-medium transition-all ${sieveDiameterIdx === 1 ? 'bg-blue-50 border-blue-500 text-blue-700' : 'bg-white border-slate-300 text-slate-600'}`}
-                                            >
-                                                30 cm
-                                            </button>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Sample Size Warning */}
-                            <div className={`mt-4 p-3 rounded-lg flex items-start gap-3 text-sm ${calculationResults.isSampleWeightSufficient ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'}`}>
-                                {calculationResults.isSampleWeightSufficient ? <CheckCircle className="w-5 h-5 shrink-0" /> : <AlertCircle className="w-5 h-5 shrink-0" />}
+                        {/* Sample Size Warning (Retained in App) */}
+                        <div className={`mt-4 p-3 rounded-lg flex items-start gap-3 text-sm ${calculationResults.isSampleWeightSufficient ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'}`}>
+                            {calculationResults.isSampleWeightSufficient ? <CheckCircle className="w-5 h-5 shrink-0" /> : <AlertCircle className="w-5 h-5 shrink-0" />}
+                            <div>
+                                <div className="font-bold">Sample Size Check (IS 2386 Pt. I - Table IV)</div>
                                 <div>
-                                    <div className="font-bold">Sample Size Check (IS 2386 Pt. I - Table IV)</div>
-                                    <div>
-                                        Minimum Required: <span className="font-mono font-bold">{(calculationResults.minSampleWeight/1000).toFixed(1)} kg</span> for {currentSpec.nominalSize}mm nominal size.
-                                    </div>
-                                    <div className="mt-1">
-                                        Current Total: <span className="font-mono font-bold">{(calculationResults.totalWeight/1000).toFixed(3)} kg</span>
-                                    </div>
+                                    Minimum Required: <span className="font-mono font-bold">{(calculationResults.minSampleWeight/1000).toFixed(1)} kg</span> for {currentSpec.nominalSize}mm nominal size.
+                                </div>
+                                <div className="mt-1">
+                                    Current Total: <span className="font-mono font-bold">{(calculationResults.totalWeight/1000).toFixed(3)} kg</span>
                                 </div>
                             </div>
-                        </section>
+                        </div>
+                    </section>
 
-                        {/* Main Analysis Table */}
-                        <section className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                            <div className="p-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
-                                <h2 className="font-bold text-lg text-slate-800 flex items-center gap-2">
-                                    <FileText className="w-5 h-5 text-blue-600" />
-                                    Sieve Analysis Data
-                                </h2>
-                                <button 
-                                    onClick={() => {setWeights({}); setPanWeight(0);}}
-                                    className="text-sm text-slate-500 hover:text-red-600 flex items-center gap-1 transition-colors"
-                                >
-                                    <RefreshCw className="w-4 h-4" /> Clear Data
-                                </button>
-                            </div>
+                    {/* Main Analysis Table */}
+                    <section className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                        <div className="p-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
+                            <h2 className="font-bold text-lg text-slate-800 flex items-center gap-2">
+                                <FileText className="w-5 h-5 text-blue-600" />
+                                Sieve Analysis Data
+                            </h2>
+                            <button 
+                                onClick={() => {setWeights({}); setPanWeight(0);}}
+                                className="text-sm text-slate-500 hover:text-red-600 flex items-center gap-1 transition-colors"
+                            >
+                                <RefreshCw className="w-4 h-4" /> Clear Data
+                            </button>
+                        </div>
 
-                            {/* Responsive Table Container */}
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-sm text-left">
-                                    <thead className="text-xs text-slate-500 uppercase bg-slate-100 border-b border-slate-200">
-                                        <tr>
-                                            <th className="px-4 py-3 font-bold">Sieve Size</th>
-                                            <th className="px-4 py-3 min-w-[120px]">Weight Retained (g)</th>
-                                            <th className="px-4 py-3 text-right hidden md:table-cell">% Retained</th>
-                                            <th className="px-4 py-3 text-right bg-yellow-50 border-l border-yellow-100 text-yellow-900 font-bold">Cum. % Retained</th>
-                                            <th className="px-4 py-3 text-right">% Finer</th>
-                                            <th className="px-4 py-3 text-center">IS Limits</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-slate-100">
-                                        {calculationResults.rows.map((row) => (
-                                            <tr key={row.sieve.id} className="hover:bg-slate-50 transition-colors">
-                                                <td className="px-4 py-3 font-medium text-slate-700">
-                                                    {row.sieve.label}
-                                                </td>
-                                                <td className="px-4 py-2">
-                                                    <input
-                                                        type="number"
-                                                        min="0"
-                                                        placeholder="0"
-                                                        className={`w-full px-3 py-2 border rounded focus:ring-2 outline-none transition-all ${row.isOverloaded ? 'bg-orange-50 border-orange-300 text-orange-800 focus:ring-orange-500' : 'bg-white border-slate-300 focus:ring-blue-500'}`}
-                                                        value={weights[row.sieve.id] || ''}
-                                                        onChange={(e) => setWeights({...weights, [row.sieve.id]: e.target.value})}
-                                                    />
-                                                    {row.isOverloaded && (
-                                                        <div className="text-[10px] text-orange-600 mt-1 font-medium">
-                                                            Max: {row.maxRetained}g
-                                                        </div>
-                                                    )}
-                                                </td>
-                                                <td className="px-4 py-3 text-right text-slate-600 hidden md:table-cell">
-                                                    {row.percentRetained.toFixed(2)}%
-                                                </td>
-                                                <td className="px-4 py-3 text-right font-bold text-yellow-900 bg-yellow-50 border-l border-yellow-100">
-                                                    {row.cumulativeRetained.toFixed(2)}
-                                                </td>
-                                                <td className={`px-4 py-3 text-right font-bold ${row.status === false ? 'text-red-600' : 'text-slate-800'}`}>
-                                                    {row.percentFiner.toFixed(2)}
-                                                </td>
-                                                <td className="px-4 py-3 text-center whitespace-nowrap">
-                                                    <div className="flex flex-col items-center justify-center gap-1">
-                                                        <span className="text-xs text-slate-500">{row.limitString}</span>
-                                                        {row.limitString !== '-' && (
-                                                            <StatusBadge pass={row.status} />
-                                                        )}
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                        {/* Pan Row */}
-                                        <tr className="bg-slate-50 font-semibold border-t border-slate-200">
-                                            <td className="px-4 py-3">Pan</td>
+                        {/* Responsive Table Container */}
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-sm text-left">
+                                <thead className="text-xs text-slate-500 uppercase bg-slate-100 border-b border-slate-200">
+                                    <tr>
+                                        <th className="px-4 py-3 font-bold">Sieve Size</th>
+                                        <th className="px-4 py-3 min-w-[120px]">Weight Retained (g)</th>
+                                        <th className="px-4 py-3 text-right hidden md:table-cell">% Retained</th>
+                                        <th className="px-4 py-3 text-right bg-yellow-50 border-l border-yellow-100 text-yellow-900 font-bold">Cum. % Retained</th>
+                                        <th className="px-4 py-3 text-right">% Finer</th>
+                                        <th className="px-4 py-3 text-center">IS Limits</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100">
+                                    {calculationResults.rows.map((row) => (
+                                        <tr key={row.sieve.id} className="hover:bg-slate-50 transition-colors">
+                                            <td className="px-4 py-3 font-medium text-slate-700">
+                                                {row.sieve.label}
+                                            </td>
                                             <td className="px-4 py-2">
                                                 <input
                                                     type="number"
                                                     min="0"
                                                     placeholder="0"
-                                                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                                                    value={panWeight || ''}
-                                                    onChange={(e) => setPanWeight(e.target.value)}
+                                                    className={`w-full px-3 py-2 border rounded focus:ring-2 outline-none transition-all ${row.isOverloaded ? 'bg-orange-50 border-orange-300 text-orange-800 focus:ring-orange-500' : 'bg-white border-slate-300 focus:ring-blue-500'}`}
+                                                    value={weights[row.sieve.id] || ''}
+                                                    onChange={(e) => setWeights({...weights, [row.sieve.id]: e.target.value})}
                                                 />
+                                                {row.isOverloaded && (
+                                                    <div className="text-[10px] text-orange-600 mt-1 font-medium">
+                                                        Max: {row.maxRetained}g
+                                                    </div>
+                                                )}
                                             </td>
-                                            <td colSpan="4" className="px-4 py-3 text-xs text-slate-400 italic hidden md:table-cell">
-                                                Material passing the smallest sieve
+                                            <td className="px-4 py-3 text-right text-slate-600 hidden md:table-cell">
+                                                {row.percentRetained.toFixed(2)}%
                                             </td>
-                                            <td colSpan="3" className="px-4 py-3 text-xs text-slate-400 italic md:hidden">
-                                                Pan material
+                                            <td className="px-4 py-3 text-right font-bold text-yellow-900 bg-yellow-50 border-l border-yellow-100">
+                                                {row.cumulativeRetained.toFixed(2)}
+                                            </td>
+                                            <td className={`px-4 py-3 text-right font-bold ${row.status === false ? 'text-red-600' : 'text-slate-800'}`}>
+                                                {row.percentFiner.toFixed(2)}
+                                            </td>
+                                            <td className="px-4 py-3 text-center whitespace-nowrap">
+                                                <div className="flex flex-col items-center justify-center gap-1">
+                                                    <span className="text-xs text-slate-500">{row.limitString}</span>
+                                                    {row.limitString !== '-' && (
+                                                        <StatusBadge pass={row.status} />
+                                                    )}
+                                                </div>
                                             </td>
                                         </tr>
-                                        {/* Total Row */}
-                                        <tr className="bg-slate-100 font-bold text-slate-800 border-t-2 border-slate-300">
-                                            <td className="px-4 py-3">Total</td>
-                                            <td className="px-4 py-3">{calculationResults.totalWeight} g</td>
-                                            <td className="hidden md:table-cell">100.00%</td>
-                                            <td className="bg-yellow-100 border-l border-yellow-200"></td>
-                                            <td></td>
-                                            <td></td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                                    ))}
+                                    {/* Pan Row */}
+                                    <tr className="bg-slate-50 font-semibold border-t border-slate-200">
+                                        <td className="px-4 py-3">Pan</td>
+                                        <td className="px-4 py-2">
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                placeholder="0"
+                                                className="w-full px-3 py-2 bg-white border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                                                value={panWeight || ''}
+                                                onChange={(e) => setPanWeight(e.target.value)}
+                                            />
+                                        </td>
+                                        <td colSpan="4" className="px-4 py-3 text-xs text-slate-400 italic hidden md:table-cell">
+                                            Material passing the smallest sieve
+                                        </td>
+                                        <td colSpan="3" className="px-4 py-3 text-xs text-slate-400 italic md:hidden">
+                                            Pan material
+                                        </td>
+                                    </tr>
+                                    {/* Total Row */}
+                                    <tr className="bg-slate-100 font-bold text-slate-800 border-t-2 border-slate-300">
+                                        <td className="px-4 py-3">Total</td>
+                                        <td className="px-4 py-3">{calculationResults.totalWeight} g</td>
+                                        <td className="hidden md:table-cell">100.00%</td>
+                                        <td className="bg-yellow-100 border-l border-yellow-200"></td>
+                                        <td></td>
+                                        <td></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+
+                    {/* Results Summary */}
+                    <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Fineness Modulus Card */}
+                        <div className="bg-gradient-to-br from-blue-600 to-blue-800 rounded-xl p-6 text-white shadow-lg flex flex-col justify-between">
+                            <div>
+                                <h3 className="text-blue-100 font-medium text-sm uppercase tracking-wider mb-1">Fineness Modulus</h3>
+                                <div className="text-4xl font-bold">{finenessModulus}</div>
                             </div>
-                        </section>
-
-                        {/* Results Summary */}
-                        <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {/* Fineness Modulus Card */}
-                            <div className="bg-gradient-to-br from-blue-600 to-blue-800 rounded-xl p-6 text-white shadow-lg flex flex-col justify-between">
-                                <div>
-                                    <h3 className="text-blue-100 font-medium text-sm uppercase tracking-wider mb-1">Fineness Modulus</h3>
-                                    <div className="text-4xl font-bold">{finenessModulus}</div>
-                                </div>
-                                <div className="mt-4 text-blue-200 text-xs">
-                                    Calculated using sum of cumulative % retained on standard sieves divided by 100.
-                                </div>
+                            <div className="mt-4 text-blue-200 text-xs">
+                                Calculated using sum of cumulative % retained on standard sieves divided by 100.
                             </div>
+                        </div>
 
-                            {/* Quick Stats */}
-                            <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm flex flex-col justify-center space-y-3">
-                                <h3 className="text-slate-500 font-medium text-sm uppercase tracking-wider">Check Results</h3>
-                                <div className="flex items-center gap-3">
-                                    {calculationResults.rows.some(r => r.status === false) ? (
-                                        <>
-                                            <div className="p-3 bg-red-100 text-red-600 rounded-full">
-                                                <AlertCircle className="w-8 h-8" />
-                                            </div>
-                                            <div>
-                                                <div className="text-lg font-bold text-red-700">Does Not Conform</div>
-                                                <div className="text-sm text-slate-500">Some values are outside IS 383 limits.</div>
-                                            </div>
-                                        </>
-                                    ) : calculationResults.totalWeight > 0 ? (
-                                        <>
-                                            <div className="p-3 bg-green-100 text-green-600 rounded-full">
-                                                <CheckCircle className="w-8 h-8" />
-                                            </div>
-                                            <div>
-                                                <div className="text-lg font-bold text-green-700">Conforms to IS 383</div>
-                                                <div className="text-sm text-slate-500">All gradation values within limits.</div>
-                                            </div>
-                                        </>
-                                    ) : (
-                                        <div className="text-slate-400 italic">Enter weights to see results.</div>
-                                    )}
-                                </div>
+                        {/* Quick Stats */}
+                        <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm flex flex-col justify-center space-y-3">
+                            <h3 className="text-slate-500 font-medium text-sm uppercase tracking-wider">Check Results</h3>
+                            <div className="flex items-center gap-3">
+                                {calculationResults.rows.some(r => r.status === false) ? (
+                                    <>
+                                        <div className="p-3 bg-red-100 text-red-600 rounded-full">
+                                            <AlertCircle className="w-8 h-8" />
+                                        </div>
+                                        <div>
+                                            <div className="text-lg font-bold text-red-700">Does Not Conform</div>
+                                            <div className="text-sm text-slate-500">Some values are outside IS 383 limits.</div>
+                                        </div>
+                                    </>
+                                ) : calculationResults.totalWeight > 0 ? (
+                                    <>
+                                        <div className="p-3 bg-green-100 text-green-600 rounded-full">
+                                            <CheckCircle className="w-8 h-8" />
+                                        </div>
+                                        <div>
+                                            <div className="text-lg font-bold text-green-700">Conforms to IS 383</div>
+                                            <div className="text-sm text-slate-500">All gradation values within limits.</div>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <div className="text-slate-400 italic">Enter weights to see results.</div>
+                                )}
                             </div>
-                        </section>
-                        
-                        {/* Help Note */}
-                        <section className="bg-blue-50 rounded-lg p-4 text-sm text-blue-800 flex gap-3 items-start">
-                            <Info className="w-5 h-5 shrink-0 mt-0.5" />
-                            <div className="space-y-2">
-                                <p>
-                                    <strong>Fineness Modulus Calculation:</strong> Only the following standard sieves are summed: 
-                                    <span className="font-mono ml-1 bg-blue-100 px-1 rounded">80mm, 40mm, 20mm, 10mm, 4.75mm, 2.36mm, 1.18mm, 600µm, 300µm, 150µm</span>.
-                                </p>
-                                <p className="text-xs text-blue-600">
-                                    * For Coarse Aggregates, standard sieves smaller than the tested range are assumed to have 100% cumulative retained.
-                                </p>
-                                <p className="text-xs text-orange-600 font-bold">
-                                    * Orange input boxes indicate overloading of the sieve (Weight Retained &gt; Max allowed as per IS 2386 Pt I).
-                                </p>
-                            </div>
-                        </section>
+                        </div>
+                    </section>
+                    
+                    {/* Help Note */}
+                    <section className="bg-blue-50 rounded-lg p-4 text-sm text-blue-800 flex gap-3 items-start">
+                        <Info className="w-5 h-5 shrink-0 mt-0.5" />
+                        <div className="space-y-2">
+                            <p>
+                                <strong>Fineness Modulus Calculation:</strong> Only the following standard sieves are summed: 
+                                <span className="font-mono ml-1 bg-blue-100 px-1 rounded">80mm, 40mm, 20mm, 10mm, 4.75mm, 2.36mm, 1.18mm, 600µm, 300µm, 150µm</span>.
+                            </p>
+                            <p className="text-xs text-blue-600">
+                                * For Coarse Aggregates, standard sieves smaller than the tested range are assumed to have 100% cumulative retained.
+                            </p>
+                            <p className="text-xs text-orange-600 font-bold">
+                                * Orange input boxes indicate overloading of the sieve (Weight Retained &gt; Max allowed as per IS 2386 Pt I).
+                            </p>
+                        </div>
+                    </section>
 
-                        {/* App Footer - Credits (Red Footnote) */}
-                        <footer className="mt-8 text-center text-red-600 text-sm font-medium space-y-1 pb-8 border-t border-slate-200 pt-4">
-                            <p>Conceived and developed by Vaisakh G.</p>
-                            <p>Queries and suggestions: WhatsApp 9656840794</p>
-                        </footer>
+                    {/* App Footer - Credits (Red Footnote) */}
+                    <footer className="mt-8 text-center text-red-600 text-sm font-medium space-y-1 pb-8 border-t border-slate-200 pt-4">
+                        <p>Conceived and developed by Vaisakh G.</p>
+                        <p>Queries and suggestions: WhatsApp 9656840794</p>
+                    </footer>
 
-                    </main>
-                </div>
-            );
-        }
+                </main>
+            </div>
+        );
+    }
 
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<SieveAnalysisApp />);
-    </script>
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<SieveAnalysisApp />);
+</script>
+
+
+
+
 </body>
 
 </html>
