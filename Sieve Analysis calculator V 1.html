@@ -505,7 +505,7 @@
 
 
                 // Determine Y position for the table to start below all details
-                let tableStartY = detailY + 8; // Start the table after the details
+                let tableStartY = detailY + 3; // Start the table after the details
 
 
                 // 6. Table
@@ -554,7 +554,7 @@
                 });
 
                 // 7. Final Results
-                let finalY = doc.lastAutoTable.finalY + 15;
+                let finalY = doc.lastAutoTable.finalY + 5;
                 
                 // Add a new page if conclusion won't fit well (30 units for conclusion + 20 for note/signatures)
                 if (finalY + 50 > pageHeight - 15) {
@@ -580,7 +580,7 @@
                 doc.setTextColor(0, 0, 0); // Reset color
                 
                 // --- 8. Note Section (New) ---
-                finalY += 15; // Space after conclusion
+                finalY += 25; // Space after conclusion
                 
                 // Check if adding the note fits on the current page, otherwise add a new page
                 const requiredNoteHeight = 4 * 4.5 + 5 + 10; // 4 lines * line height + heading + buffer
@@ -980,6 +980,4 @@
     </script>
 </body>
 </html>
-
-
 
