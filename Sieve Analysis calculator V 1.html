@@ -284,15 +284,15 @@
             
             // MODIFIED STATE: Only Client Name is retained
             const [clientDetails, setClientDetails] = useState({
-                clientName: 'M/s. ABC Constructions',
+                clientName: 'Client',
             });
 
             // NEW STATE FOR REFERENCE NUMBER
-            const [refNo, setRefNo] = useState('PEC/CE/SM/1900/2025'); 
+            const [refNo, setRefNo] = useState('PEC/CE/SM/1'); 
 
             const [projectDetails, setProjectDetails] = useState({
                 projectName: 'Construction of New Block at CoEP',
-                description: 'Testing of Coarse Aggregate sample from quarry source for M30 grade concrete mix design.',
+                description: 'Testing of Aggregate sample.',
                 testDate: new Date().toISOString().split('T')[0] // Default to YYYY-MM-DD
             });
             
@@ -440,7 +440,7 @@
                 });
 
                 // Separator Line
-                currentY += 2; // Reduced gap
+                //currentY += 2; // Reduced gap
                 doc.line(margin, currentY, pageWidth - margin, currentY); 
                 
                 // 2. CAPTION
@@ -1012,3 +1012,4 @@
     </script>
 </body>
 </html>
+
