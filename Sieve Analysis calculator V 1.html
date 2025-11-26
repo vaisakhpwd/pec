@@ -282,6 +282,11 @@
             // New State for Sieve Diameter (0 = 45cm, 1 = 30cm)
             const [sieveDiameterIdx, setSieveDiameterIdx] = useState(0); 
             
+            // MODIFIED STATE: Only Client Name is retained
+            const [clientDetails, setClientDetails] = useState({
+                clientName: 'M/s. ABC Constructions',
+            });
+
             // NEW STATE FOR REFERENCE NUMBER
             const [refNo, setRefNo] = useState('PEC/CE/SM/1900/2025'); 
 
@@ -409,8 +414,9 @@
                 const margin = 14;
                 const contentWidth = pageWidth - (2 * margin);
                 const detailLineHeight = 5; // Consistent line height for details section
-                const labelWidth = 30; // Consistent label width for details section (e.g., "Project Name:")
-                
+                const projectLabelWidth = 30; // Label width for details section (e.g., "Project Name:")
+                const clientLabelWidth = 35; // Label width for client details
+
                 // Date format for PDF content (DD-MM-YYYY)
                 const formattedDate = formatDateDDMMYYYY(projectDetails.testDate);
 
@@ -467,14 +473,26 @@
                 let detailY = currentY + 3; 
                 doc.setFontSize(10);
 
+                // --- MODIFIED CLIENT DETAILS BLOCK: Only Client Name ---
+                doc.setFont("helvetica", "bold");
+                doc.text(`Client Name:`, margin, detailY);
+                doc.setFont("helvetica", "normal");
+                const clientNameText = clientDetails.clientName || '-';
+                // Use width minus label width for content
+                const splitClientName = doc.splitTextToSize(clientNameText, contentWidth - clientLabelWidth - 2); 
+                doc.text(splitClientName, margin + clientLabelWidth, detailY);
+                detailY += (splitClientName.length * detailLineHeight) + 2; // Move Y down and add small buffer
+
+                // --- END MODIFIED CLIENT DETAILS BLOCK ---
+
                 // Project Name (Full Width)
                 doc.setFont("helvetica", "bold");
                 doc.text(`Project Name:`, margin, detailY);
                 doc.setFont("helvetica", "normal");
                 const projectNameText = projectDetails.projectName || '-';
                 // Use width minus label width for content
-                const splitProjectName = doc.splitTextToSize(projectNameText, contentWidth - labelWidth - 2); 
-                doc.text(splitProjectName, margin + labelWidth, detailY);
+                const splitProjectName = doc.splitTextToSize(projectNameText, contentWidth - projectLabelWidth - 2); 
+                doc.text(splitProjectName, margin + projectLabelWidth, detailY);
                 detailY += (splitProjectName.length * detailLineHeight);
 
                 // Description of Work (Full Width)
@@ -483,7 +501,7 @@
                 doc.setFont("helvetica", "normal");
                 const descriptionText = projectDetails.description || '-';
                 // Use width minus label width for content
-                const splitDescription = doc.splitTextToSize(descriptionText, contentWidth - labelWidth + 8); 
+                const splitDescription = doc.splitTextToSize(descriptionText, contentWidth - projectLabelWidth + 8); 
                 doc.text(splitDescription, margin + 23, detailY);
                 detailY += (splitDescription.length * detailLineHeight);
                 
@@ -512,7 +530,7 @@
                 const tableBody = calculationResults.rows.map(row => [
                     row.sieve.label,
                     (weights[row.sieve.id] || 0),
-                    row.maxRetained ? row.maxRetained : '-', // Max allowed
+                    // REMOVED 'Max Allow (g)' COLUMN DATA
                     row.percentRetained.toFixed(2),
                     row.cumulativeRetained.toFixed(2),
                     row.percentFiner.toFixed(2),
@@ -520,18 +538,20 @@
                     row.status === true ? 'Pass' : (row.status === false ? 'FAIL' : '-')
                 ]);
 
-                tableBody.push(['Pan', (panWeight || 0), '-', '-', '-', '-', '-', '-']);
-                tableBody.push(['Total', calculationResults.totalWeight, '-', '100%', '-', '-', '-', '-']);
+                // REMOVED 'Max Allow (g)' COLUMN DATA (index 2) from Pan and Total rows
+                tableBody.push(['Pan', (panWeight || 0), '-', '-', '-', '-', '-']); 
+                tableBody.push(['Total', calculationResults.totalWeight, '100%', '-', '-', '-', '-']); // Total % Retained is 100%
 
                 doc.autoTable({
                     startY: tableStartY,
-                    head: [['Sieve', 'Wt. Ret (g)', 'Max Allow (g)', '% Ret', 'Cum %', '% Finer', 'Limits', 'Status']],
+                    // REMOVED 'Max Allow (g)' COLUMN HEADER
+                    head: [['Sieve', 'Wt. Ret (g)', '% Ret', 'Cum %', '% Finer', 'Limits', 'Status']],
                     body: tableBody,
                     theme: 'grid',
                     headStyles: { fillColor: [29, 78, 216], textColor: 255 },
                     styles: { fontSize: 9, cellPadding: 2 },
                     didParseCell: function(data) {
-                        // Highlight Overloaded Weights
+                        // Highlight Overloaded Weights (Index 1 remains the same)
                         if (data.section === 'body' && data.column.index === 1) {
                             const rowIndex = data.row.index;
                             if (rowIndex < calculationResults.rows.length) {
@@ -541,8 +561,8 @@
                                 }
                             }
                         }
-                        // Highlight Status
-                        if (data.section === 'body' && data.column.index === 7) {
+                        // Highlight Status (Index 7 is now Index 6)
+                        if (data.section === 'body' && data.column.index === 6) {
                             if (data.cell.raw === 'FAIL') {
                                 data.cell.styles.textColor = [220, 38, 38];
                                 data.cell.styles.fontStyle = 'bold';
@@ -608,11 +628,11 @@
                 });
                 
                 // --- 9. Signing Spaces (New) ---
-                finalY = noteY + 15; // Space after notes
+                finalY = noteY + 5; // Space after notes
                 
                 const signatures = [
-                    { title: 'Project Incharge (PI)' },
-                    { title: 'Head of Department (HoD CE)' },
+                    { title: 'PI' },
+                    { title: 'HoD CE' },
                     { title: 'Principal' }
                 ];
                 
@@ -689,6 +709,18 @@
                                 Project Information
                             </h2>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                {/* MODIFIED: Only Client Name */}
+                                <div className="md:col-span-3">
+                                    <label className="block text-sm font-semibold text-slate-700 mb-1">Client Name</label>
+                                    <input 
+                                        type="text" 
+                                        className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                                        value={clientDetails.clientName}
+                                        onChange={e => setClientDetails({...clientDetails, clientName: e.target.value})}
+                                    />
+                                </div>
+                                {/* Client Address and Client Contact removed */}
+
                                 <div>
                                     <label className="block text-sm font-semibold text-slate-700 mb-1">Name of Project</label>
                                     <input 
@@ -980,4 +1012,3 @@
     </script>
 </body>
 </html>
-
