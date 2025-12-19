@@ -4,87 +4,48 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Compressive Strength Calculator</title>
-    <!-- 1. Load Tailwind CSS for styling -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- 2. Load PDF Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
     
-    <!-- 3. Load required Firebase SDKs -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, getDoc, collection, getDocs, query, where, Timestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         
-        // Expose Firebase functions globally for use in the main script
         window.firebase = { initializeApp, getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, getFirestore, doc, setDoc, getDoc, collection, getDocs, query, where, Timestamp, setLogLevel };
 
-        // Attach main app logic to the window.onload event
         window.runApplication = mainAppLogic;
-        
-        // Call runApplication() when the window is loaded
         window.onload = () => {
             window.runApplication();
         };
-
     </script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
         body { font-family: 'Inter', sans-serif; }
-        .data-input {
-            transition: all 0.2s;
-        }
-        .data-input:focus {
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5); /* ring-blue-500 */
-        }
-        /* Custom scrollbar for mobile feel */
+        .data-input { transition: all 0.2s; }
+        .data-input:focus { box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5); }
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-thumb { background-color: #60a5fa; border-radius: 2px; }
         ::-webkit-scrollbar-track { background-color: #f3f4f6; }
-        
-        /* Table styling for Summary Screen 3 */
-        .summary-table th, .summary-table td {
-            padding: 8px 6px;
-            white-space: nowrap;
-            text-align: center;
-        }
-        .summary-table th {
-            background-color: #e5e7eb; /* gray-200 */
-            font-size: 0.75rem; /* text-xs */
-        }
-        /* Style for checkbox */
+        .summary-table th, .summary-table td { padding: 8px 6px; white-space: nowrap; text-align: center; }
+        .summary-table th { background-color: #e5e7eb; font-size: 0.75rem; }
         .pwd-checkbox {
-            appearance: none;
-            width: 1.5rem;
-            height: 1.5rem;
-            border: 2px solid #9ca3af; /* gray-400 */
-            border-radius: 0.375rem; /* rounded-md */
-            display: inline-block;
-            vertical-align: middle;
-            position: relative;
-            cursor: pointer;
-            transition: background-color 0.2s;
+            appearance: none; width: 1.5rem; height: 1.5rem; border: 2px solid #9ca3af; 
+            border-radius: 0.375rem; display: inline-block; vertical-align: middle; 
+            position: relative; cursor: pointer; transition: background-color 0.2s;
         }
-        .pwd-checkbox:checked {
-            background-color: #3b82f6; /* blue-500 */
-            border-color: #3b82f6;
-        }
+        .pwd-checkbox:checked { background-color: #3b82f6; border-color: #3b82f6; }
         .pwd-checkbox:checked::after {
-            content: '✔';
-            color: white;
-            font-size: 1rem;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
+            content: '✔'; color: white; font-size: 1rem; position: absolute; 
+            top: 50%; left: 50%; transform: translate(-50%, -50%);
         }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen p-2 md:p-8">
 
-    <!-- Loading Indicator -->
     <div id="loading-overlay" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 transition-opacity duration-300">
         <div class="flex flex-col items-center">
             <div class="animate-spin rounded-full h-16 w-16 border-b-4 border-white mb-4"></div>
@@ -92,27 +53,18 @@
         </div>
     </div>
 
-    <!-- Main Application Container -->
     <div id="app-container" class="max-w-xl mx-auto bg-white shadow-2xl rounded-xl p-4 md:p-6 transition-all duration-300">
         
         <h1 class="text-3xl font-extrabold text-gray-900 mb-6 border-b pb-3 text-center">
             Compressive Strength Calculator
         </h1>
 
-        <!-- Navigation Bar (Updated for 3 Steps) -->
         <div class="flex justify-around mb-6 text-sm font-medium">
-            <button id="nav-step1" class="p-2 w-1/3 text-center rounded-l-lg transition-colors duration-200 bg-blue-500 text-white shadow-md">
-                1. Project Details
-            </button>
-            <button id="nav-step2" class="p-2 w-1/3 text-center transition-colors duration-200 bg-gray-200 text-gray-500 hover:bg-gray-300" disabled>
-                2. Cube Data
-            </button>
-            <button id="nav-step3" class="p-2 w-1/3 text-center rounded-r-lg transition-colors duration-200 bg-gray-200 text-gray-500 hover:bg-gray-300" disabled>
-                3. Summary
-            </button>
+            <button id="nav-step1" class="p-2 w-1/3 text-center rounded-l-lg transition-colors duration-200 bg-blue-500 text-white shadow-md">1. Project Details</button>
+            <button id="nav-step2" class="p-2 w-1/3 text-center transition-colors duration-200 bg-gray-200 text-gray-500 hover:bg-gray-300" disabled>2. Cube Data</button>
+            <button id="nav-step3" class="p-2 w-1/3 text-center rounded-r-lg transition-colors duration-200 bg-gray-200 text-gray-500 hover:bg-gray-300" disabled>3. Summary</button>
         </div>
 
-        <!-- Notification/Alert Modal -->
         <div id="modal-container" class="fixed inset-0 bg-gray-900 bg-opacity-75 hidden items-center justify-center z-40">
             <div id="modal-content" class="bg-white p-6 rounded-lg shadow-xl max-w-sm mx-4 transform transition-all duration-300 scale-95 opacity-0">
                 <h3 id="modal-title" class="text-xl font-bold mb-3 text-red-600">Warning!</h3>
@@ -124,16 +76,12 @@
             </div>
         </div>
 
-        <!-- Screen 1: Project Details -->
         <div id="screen1" class="space-y-4">
             <h2 class="text-xl font-semibold text-gray-700">Test Information</h2>
-
             <div class="flex space-x-2 text-xs">
                 <span class="p-1 bg-gray-100 rounded-lg text-gray-600">App ID: <span id="display-app-id" class="font-mono"></span></span>
                 <span class="p-1 bg-gray-100 rounded-lg text-gray-600">User ID: <span id="display-user-id" class="font-mono">Loading...</span></span>
             </div>
-
-            <!-- Project and Location -->
             <div>
                 <label for="project-name" class="block text-sm font-medium text-gray-700">Project Name</label>
                 <input type="text" id="project-name" placeholder="[BR/2020/2397] General Civil Work" class="data-input mt-1 block w-full border border-gray-300 rounded-lg shadow-sm p-3 focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
@@ -142,8 +90,6 @@
                 <label for="location" class="block text-sm font-medium text-gray-700">Location</label>
                 <input type="text" id="location" placeholder="Slab A1P2" class="data-input mt-1 block w-full border border-gray-300 rounded-lg shadow-sm p-3 focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
             </div>
-
-            <!-- Grade and Mix Type -->
             <div class="flex space-x-4">
                 <div class="w-1/2">
                     <label for="concrete-grade" class="block text-sm font-medium text-gray-700">Grade (N/mm²)</label>
@@ -157,8 +103,6 @@
                     </select>
                 </div>
             </div>
-
-            <!-- Quantity and Samples -->
             <div class="flex space-x-4">
                 <div class="w-1/2">
                     <label for="quantity" class="block text-sm font-medium text-gray-700">Quantity (m³)</label>
@@ -170,8 +114,6 @@
                     <input type="number" id="num-samples" min="1" placeholder="5" class="data-input mt-1 block w-full border border-gray-300 rounded-lg shadow-sm p-3 focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
                 </div>
             </div>
-
-            <!-- Dates and Age -->
             <div class="grid grid-cols-2 gap-4">
                 <div>
                     <label for="date-casting" class="block text-sm font-medium text-gray-700">Date of Casting (DD/MM/YYYY)</label>
@@ -185,9 +127,7 @@
             <div class="mt-4 p-3 bg-blue-50 rounded-lg">
                 <p class="text-sm font-medium text-blue-700">Age of Specimen: <span id="age-specimen" class="font-bold text-base">0</span> Days</p>
             </div>
-
-            <!-- Reference Standards Section -->
-            <div class_id="reference-standards" class="space-y-3 p-4 bg-gray-100 rounded-lg border border-gray-200">
+            <div class="space-y-3 p-4 bg-gray-100 rounded-lg border border-gray-200">
                 <h3 class="text-lg font-semibold text-gray-800">Reference Standards</h3>
                 <div>
                     <label for="reference-standard" class="block text-sm font-medium text-gray-700">Primary Standard</label>
@@ -198,44 +138,26 @@
                 </div>
                 <div class="flex items-center space-x-3 mt-3">
                     <input type="checkbox" id="is-pwd-work" class="pwd-checkbox">
-                    <!-- UPDATED LABEL with "TC " -->
                     <label for="is-pwd-work" class="text-sm font-medium text-gray-700 cursor-pointer">
                         Kerala PWD Work? (Applies TC CE/DESIGN/QC/15/2019 dated 16/05/2019)
                     </label>
                 </div>
             </div>
-
-            <!-- Action Buttons Screen 1 -->
             <div class="pt-4 flex justify-between space-x-3">
-                <button id="load-data-btn" class="flex-1 px-4 py-3 bg-gray-200 text-gray-800 rounded-lg font-semibold hover:bg-gray-300 transition-colors" disabled>
-                    Load Saved Data
-                </button>
-                <button id="save-data-btn1" class="flex-1 px-4 py-3 bg-green-500 text-white rounded-lg font-semibold hover:bg-green-600 transition-colors shadow-md" disabled>
-                    Save Progress
-                </button>
-                <button id="next-screen-btn" class="flex-1 px-4 py-3 bg-blue-500 text-white rounded-lg font-semibold hover:bg-blue-600 transition-colors shadow-md" disabled>
-                    Proceed to Data
-                </button>
+                <button id="load-data-btn" class="flex-1 px-4 py-3 bg-gray-200 text-gray-800 rounded-lg font-semibold hover:bg-gray-300 transition-colors" disabled>Load Saved Data</button>
+                <button id="save-data-btn1" class="flex-1 px-4 py-3 bg-green-500 text-white rounded-lg font-semibold hover:bg-green-600 transition-colors shadow-md" disabled>Save Progress</button>
+                <button id="next-screen-btn" class="flex-1 px-4 py-3 bg-blue-500 text-white rounded-lg font-semibold hover:bg-blue-600 transition-colors shadow-md" disabled>Proceed to Data</button>
             </div>
         </div>
 
-        <!-- Screen 2: Data Collection and Results -->
         <div id="screen2" class="hidden space-y-4">
             <h2 class="text-xl font-semibold text-gray-700">Sample Data Input (<span id="total-cubes">0</span> Cubes Total)</h2>
-
-            <!-- Samples Container -->
-            <div id="samples-container" class="space-y-6">
-                <!-- Dynamic content will be inserted here -->
-            </div>
-
-            <!-- Results Card (UPDATED with dynamic labels/fields) -->
+            <div id="samples-container" class="space-y-6"></div>
             <div id="results-card" class="hidden p-4 bg-gray-100 rounded-xl shadow-inner space-y-3">
                 <h3 class="text-lg font-bold text-gray-800 border-b pb-2">Test Results Summary</h3>
-                <p class="text-sm">Mean Compressive Strength (Accepted): <span id="results-card-mean-strength" class="font-semibold text-base text-blue-600">0.00</span> N/mm²</p>
-                <p class="text-sm">Min Compressive Strength (Accepted): <span id="results-card-min-strength" class="font-semibold text-base text-blue-600">0.00</span> N/mm²</p>
-                <!-- SD row will be hidden by JS if PWD work is selected -->
-                <p class="text-sm">Standard Deviation (IS 456): <span id="results-card-sd" class="font-semibold text-base">0</span> N/mm²</p>
-
+                <p class="text-sm">Mean Strength: <span id="results-card-mean-strength" class="font-semibold text-base text-blue-600">0.00</span> N/mm²</p>
+                <p class="text-sm">Min Strength: <span id="results-card-min-strength" class="font-semibold text-base text-blue-600">0.00</span> N/mm²</p>
+                <p class="text-sm">Standard Deviation: <span id="results-card-sd" class="font-semibold text-base">0</span> N/mm²</p>
                 <div class="mt-3 pt-3 border-t">
                     <p class="text-base font-medium text-gray-700"><span id="results-card-required-mean-label">Required Mean Strength</span>: <span id="results-card-required-mean" class="font-bold text-green-700">0.00</span> N/mm²</p>
                     <p class="text-base font-medium text-gray-700"><span id="results-card-required-min-label">Required Min Strength</span>: <span id="results-card-required-min" class="font-bold text-green-700">0.00</span> N/mm²</p>
@@ -244,28 +166,17 @@
                     <p class="text-xl font-extrabold">Test Verdict: <span id="results-card-final-verdict" class="text-red-500">PENDING</span></p>
                 </div>
             </div>
-
-            <!-- Action Buttons Screen 2 -->
             <div class="pt-4 flex flex-col space-y-3">
-                <button id="calculate-results-btn" class="w-full px-4 py-4 bg-green-600 text-white rounded-lg font-extrabold text-lg hover:bg-green-700 transition-colors shadow-xl">
-                    CALCULATE & VIEW SUMMARY (STEP 3)
-                </button>
+                <button id="calculate-results-btn" class="w-full px-4 py-4 bg-green-600 text-white rounded-lg font-extrabold text-lg hover:bg-green-700 transition-colors shadow-xl">CALCULATE & VIEW SUMMARY</button>
                 <div class="flex space-x-3">
-                    <button id="back-screen-btn" class="w-1/2 px-4 py-3 bg-gray-400 text-white rounded-lg font-semibold hover:bg-gray-500 transition-colors">
-                        Back to Details (Step 1)
-                    </button>
-                    <button id="save-data-btn2" class="w-1/2 px-4 py-3 bg-green-500 text-white rounded-lg font-semibold hover:bg-green-600 transition-colors shadow-md" disabled>
-                        Save Progress
-                    </button>
+                    <button id="back-screen-btn" class="w-1/2 px-4 py-3 bg-gray-400 text-white rounded-lg font-semibold hover:bg-gray-500 transition-colors">Back to Details</button>
+                    <button id="save-data-btn2" class="w-1/2 px-4 py-3 bg-green-500 text-white rounded-lg font-semibold hover:bg-green-600 transition-colors shadow-md" disabled>Save Progress</button>
                 </div>
             </div>
         </div>
         
-        <!-- Screen 3: Final Summary & Report -->
         <div id="screen3" class="hidden space-y-6">
             <h2 class="text-2xl font-bold text-gray-900 border-b pb-3">Final Compressive Test Report Summary</h2>
-
-            <!-- Project and Specimen Info (UPDATED with References) -->
             <div class="p-4 bg-blue-50 border border-blue-200 rounded-xl space-y-2 shadow-inner">
                 <h3 class="text-xl font-semibold text-blue-800 border-b pb-1">Project Information</h3>
                 <div class="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
@@ -278,17 +189,13 @@
                     <p><strong>Date Cast:</strong> <span id="sum-date-casting"></span></p>
                     <p><strong>Date Test:</strong> <span id="sum-date-testing"></span></p>
                     <p class="col-span-2 text-base pt-2"><strong>Specimen Age:</strong> <span id="sum-age-specimen" class="font-bold text-blue-700"></span> Days</p>
-                    <!-- References field -->
                     <p class="col-span-2 pt-2"><strong>References:</strong> <span id="sum-references" class="font-medium"></span></p>
                 </div>
             </div>
-
-            <!-- Results Section (UPDATED with dynamic labels) -->
             <div class="p-4 bg-green-50 border border-green-200 rounded-xl space-y-3 shadow-lg">
                 <h3 class="text-xl font-semibold text-green-800 border-b pb-1">Acceptance & Strength Results</h3>
                 <div class="grid grid-cols-2 gap-4 text-sm font-medium">
                     <div class="p-3 bg-white rounded-lg border">
-                        <!-- Dynamic Label -->
                         <p class="text-xs text-gray-500" id="sum-card-required-mean-label">Required Mean Strength</p>
                         <p class="text-lg font-extrabold text-green-700"><span id="sum-card-required-mean">0.00</span> N/mm²</p>
                     </div>
@@ -297,7 +204,6 @@
                         <p class="text-lg font-extrabold text-blue-700"><span id="sum-card-mean-strength">0.00</span> N/mm²</p>
                     </div>
                     <div class="p-3 bg-white rounded-lg border">
-                        <!-- Dynamic Label -->
                         <p class="text-xs text-gray-500" id="sum-card-required-min-label">Required Min Strength</p>
                         <p class="text-lg font-extrabold text-green-700"><span id="sum-card-required-min">0.00</span> N/mm²</p>
                     </div>
@@ -310,1150 +216,252 @@
                     <p class="text-2xl font-extrabold">Final Verdict: <span id="sum-card-final-verdict" class="text-red-500">PENDING</span></p>
                 </div>
             </div>
-
-            <!-- Full Sample Data and Calculation Trace Table -->
             <div class="p-4 bg-gray-100 rounded-xl shadow-md overflow-x-auto">
                 <h3 class="text-xl font-semibold text-gray-700 border-b pb-1 mb-3">Cube Data & Calculation Trace</h3>
                 <table id="sum-data-table" class="summary-table w-full text-xs border-collapse">
                     <thead>
                         <tr>
-                            <th class="sticky left-0 bg-gray-300">Sample</th>
-                            <th>Cube ID</th>
-                            <th>L (mm)</th>
-                            <th>B (mm)</th>
-                            <th>H (mm)</th>
-                            <th>Weight (kg)</th>
-                            <th>Load (kN)</th>
-			    <th class="bg-yellow-200">Density (g/cm³)</th>
-                            <th class="bg-yellow-200">Strength (N/mm²)</th>
-                            
-                            <th class="bg-yellow-200">% Var</th>
-                            <th class="bg-blue-200">Avg Strength</th>
-                            <th class="bg-blue-200">Acceptable</th>
+                            <th class="sticky left-0 bg-gray-300">Sample</th><th>Cube ID</th><th>L (mm)</th><th>B (mm)</th><th>H (mm)</th><th>Weight (kg)</th><th>Load (kN)</th><th class="bg-yellow-200">Density</th><th class="bg-yellow-200">Strength</th><th class="bg-yellow-200">% Var</th><th class="bg-blue-200">Avg Strength</th><th class="bg-blue-200">Acceptable</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <!-- Data rows dynamically inserted here -->
-                    </tbody>
+                    <tbody></tbody>
                 </table>
             </div>
-
-            <!-- Action Buttons Screen 3 -->
             <div class="pt-4 flex flex-col space-y-3">
-                <button id="export-pdf-btn3" class="w-full px-4 py-4 bg-red-600 text-white rounded-lg font-extrabold text-lg hover:bg-red-700 transition-colors shadow-xl" disabled>
-                    Generate PDF Report
-                </button>
-                <button id="back-screen2-btn" class="w-full px-4 py-3 bg-gray-400 text-white rounded-lg font-semibold hover:bg-gray-500 transition-colors">
-                    Back to Data Input (Step 2)
-                </button>
+                <button id="export-pdf-btn3" class="w-full px-4 py-4 bg-red-600 text-white rounded-lg font-extrabold text-lg hover:bg-red-700 transition-colors shadow-xl" disabled>Generate PDF Report</button>
+                <button id="back-screen2-btn" class="w-full px-4 py-3 bg-gray-400 text-white rounded-lg font-semibold hover:bg-gray-500 transition-colors">Back to Step 2</button>
             </div>
         </div>
         
- <!-- Footer -->
-    <footer class="mt-8 pb-4 text-center text-sm text-red-600">
-        <p>Conceived and developed by Vaisakh G.</p>
-        <p>Queries and suggestions: WhatsApp 9656840794</p>
-    </footer>
+        <footer class="mt-8 pb-4 text-center text-sm text-red-600">
+            <p>Conceived and developed by Vaisakh G.</p>
+            <p>Queries and suggestions: WhatsApp 9656840794</p>
+        </footer>
     </div>
 
-    <!-- JavaScript Application Logic -->
     <script>
     function mainAppLogic() {
-        // Global state and utility variables
-        let app = null;
-        let db = null;
-        let auth = null;
-        let userId = 'loading';
-        let isAuthReady = false;
-        let pdfLibrariesReady = false; // Flag to check PDF libs
-
-        const CUBE_DEFAULT_DIMENSION = 150; // mm
-        const DATA_PATH = 'public/data/cube_test_reports';
+        let app = null, db = null, auth = null, userId = 'loading', isAuthReady = false, pdfLibrariesReady = false;
+        const CUBE_DEFAULT_DIMENSION = 150, DATA_PATH = 'public/data/cube_test_reports';
 
         const state = {
-            currentPage: 1,
-            // Screen 1 Data
-            projectName: '',
-            location: '',
-            concreteGrade: 30, // N/mm2
-            mixType: 'RMC',
-            quantity: 95, // m3
-            numSamples: 5,
-            dateCasting: '', // Stored as DD/MM/YYYY string in state
-            dateTesting: '', // Stored as DD/MM/YYYY string in state
-            ageSpecimen: 0,
-            // NEW: Reference Standards
-            referenceStandard: 'IS 456:2000',
-            isPwdWork: false,
-            // Screen 2 Data
-            samples: [], // Array of { cubes: [], avgStrength: 0, acceptable: false }
-            // Results Data
-            meanStrength: 0,
-            minStrength: 0,
-            sd: 0,
-            requiredMean: 0,
-            requiredMin: 0,
-            verdict: 'PENDING'
+            currentPage: 1, projectName: '', location: '', concreteGrade: 30, mixType: 'RMC', quantity: 95, numSamples: 5, dateCasting: '', dateTesting: '', ageSpecimen: 0, referenceStandard: 'IS 456:2000', isPwdWork: false, samples: [], meanStrength: 0, minStrength: 0, sd: 0, requiredMean: 0, requiredMin: 0, verdict: 'PENDING'
         };
         
-        // --- PDF Library Check ---
-        /** Checks if jspdf and autotable are loaded */
         function checkPdfLibraries() {
             try {
                 if (window.jspdf && window.jspdf.jsPDF && typeof (new window.jspdf.jsPDF()).autoTable === 'function') {
-                    console.log("PDF libraries loaded successfully.");
                     pdfLibrariesReady = true;
-                    // If we are already on screen 3, re-check the button
-                    if (state.currentPage === 3) {
-                        updateScreen3UI();
-                    }
-                } else {
-                    console.warn("PDF libraries not yet ready, retrying...");
-                    setTimeout(checkPdfLibraries, 500); // Check again shortly
-                }
-            } catch (e) {
-                 console.error("Error checking PDF libraries:", e);
-                 setTimeout(checkPdfLibraries, 500);
-            }
+                    if (state.currentPage === 3) updateScreen3UI();
+                } else setTimeout(checkPdfLibraries, 500);
+            } catch (e) { setTimeout(checkPdfLibraries, 500); }
         }
 
-
-        // --- Utility Functions ---
-
-        /** Converts a DD/MM/YYYY string into a Date object (UTC for consistency) */
         function parseDate(dateString) {
             if (!dateString) return null;
             const parts = dateString.split('/');
             if (parts.length === 3) {
-                const day = parseInt(parts[0], 10);
-                const month = parseInt(parts[1], 10) - 1; // Month is 0-indexed
-                const year = parseInt(parts[2], 10);
-                if (isNaN(day) || isNaN(month) || isNaN(year) || year < 1900 || year > 2100) return null;
+                const day = parseInt(parts[0], 10), month = parseInt(parts[1], 10) - 1, year = parseInt(parts[2], 10);
                 const date = new Date(Date.UTC(year, month, day));
-                if (date.getUTCFullYear() === year && date.getUTCMonth() === month && date.getUTCDate() === day) {
-                    return date;
-                }
+                return (date.getUTCFullYear() === year) ? date : null;
             }
             return null;
         }
 
-        /** Formats a Date object into a DD/MM/YYYY string */
         function formatDate(date) {
-            const day = String(date.getDate()).padStart(2, '0');
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const year = date.getFullYear();
-            return `${day}/${month}/${year}`;
+            return `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`;
         }
 
-        /** Calculates the minimum required samples based on IS 456 (Table 2) */
         function calculateMinSamples(quantity) {
             const Q = parseFloat(quantity);
-            if (isNaN(Q) || Q <= 0) return 1;
-            if (Q <= 5) return 1;
-            if (Q <= 15) return 2;
-            if (Q <= 30) return 3;
-            if (Q <= 50) return 4;
+            if (Q <= 5) return 1; if (Q <= 15) return 2; if (Q <= 30) return 3; if (Q <= 50) return 4;
             return 4 + Math.ceil((Q - 50) / 50);
         }
 
-        /** Calculates the age in days between two date objects (Date Casting to Date Testing) */
-        function calculateAge(castingDate, testingDate) {
-            const cast = castingDate.getTime();
-            const test = testingDate.getTime();
-            if (test <= cast) return 0;
-            const diffTime = Math.abs(test - cast);
-            return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        }
-
-        /** Sets the default dates: Testing=Today, Casting=Today - 28 days (in DD/MM/YYYY format) */
-        function setDefaultDates() {
-            const today = new Date(); // Current date (Testing Date)
-            const pastDate = new Date(today);
-            pastDate.setDate(today.getDate() - 28); // 28 days ago (Casting Date)
-            
-            const testingString = formatDate(today);
-            const castingString = formatDate(pastDate);
-            
-            document.getElementById('date-testing').value = testingString;
-            document.getElementById('date-casting').value = castingString;
-            state.dateTesting = testingString;
-            state.dateCasting = castingString;
-
-            updateAgeSpecimen();
-        }
-
-        /** Calculates and updates the Age of Specimen */
         function updateAgeSpecimen() {
-            const castingDate = parseDate(state.dateCasting);
-            const testingDate = parseDate(state.dateTesting);
-
-            if (castingDate && testingDate) {
-                state.ageSpecimen = calculateAge(castingDate, testingDate);
-                document.getElementById('age-specimen').textContent = state.ageSpecimen;
-            } else {
-                state.ageSpecimen = 0;
-                document.getElementById('age-specimen').textContent = 0;
-            }
+            const cast = parseDate(state.dateCasting), test = parseDate(state.dateTesting);
+            state.ageSpecimen = (cast && test && test >= cast) ? Math.ceil(Math.abs(test.getTime() - cast.getTime()) / 86400000) : 0;
+            document.getElementById('age-specimen').textContent = state.ageSpecimen;
         }
 
-        /** Calculates Density (g/cm³) and Compressive Strength (N/mm²) for a cube */
         function calculateCubeMetrics(L, B, H, W, Load) {
-            L = parseFloat(L) || CUBE_DEFAULT_DIMENSION; 
-            B = parseFloat(B) || CUBE_DEFAULT_DIMENSION; 
-            H = parseFloat(H) || CUBE_DEFAULT_DIMENSION; 
-            W = parseFloat(W) || 0; 
-            Load = parseFloat(Load) || 0; 
-            
-            let density = 0.00;
-            let strength = 0.00;
-            const area = L * B;
-            const volume = area * H;
-
-            if (area > 0 && Load > 0) {
-                strength = (Load * 1000) / area;
-            }
-            if (volume > 0 && W > 0) {
-                const volumeCm3 = volume / 1000;
-                density = (W * 1000) / volumeCm3;
-            }
-            return { density, strength };
+            let area = L * B, volume = area * H, strength = (Load * 1000) / area, density = (W * 1000) / (volume / 1000);
+            return { density: isNaN(density) ? 0 : density, strength: isNaN(strength) ? 0 : strength };
         }
 
-        /** Calculates all metrics for a sample (average, variation, acceptability) */
-        function calculateSampleMetrics(sampleIndex) {
-            const sample = state.samples[sampleIndex];
-            if (!sample) return;
-
-            const strengths = sample.cubes.map(cube => {
-                const metrics = calculateCubeMetrics(cube.L, cube.B, cube.H, cube.W, cube.Load);
-                cube.density = metrics.density;
-                cube.strength = metrics.strength;
-                return cube.strength;
-            }).filter(s => !isNaN(s) && s > 0);
-
-            let avgStrength = 0;
-            if (strengths.length === 3) {
-                avgStrength = strengths.reduce((sum, s) => sum + s, 0) / 3;
-            }
-            sample.avgStrength = avgStrength;
-
-            if (avgStrength > 0) {
-                sample.acceptable = true; // Assume true, then check
-                sample.cubes.forEach(cube => {
-                    cube.variation = cube.strength - avgStrength;
-                    cube.percentVariation = (cube.variation / avgStrength) * 100;
-                    if (Math.abs(cube.percentVariation) > 15) {
-                        sample.acceptable = false; // Set to false if any cube fails
-                    }
-                });
-            } else {
-                sample.acceptable = false;
-                sample.cubes.forEach(cube => {
-                    cube.variation = 0;
-                    cube.percentVariation = 0;
-                });
-            }
-
-            // Update UI elements on Screen 2
-            const avgEl = document.getElementById(`sample-avg-${sampleIndex}`);
-            if (avgEl) avgEl.textContent = sample.avgStrength.toFixed(2);
-            const acceptableEl = document.getElementById(`sample-acceptable-${sampleIndex}`);
-            if (acceptableEl) {
-                acceptableEl.textContent = sample.acceptable ? 'Yes' : 'No';
-                acceptableEl.className = `font-bold ${sample.acceptable ? 'text-green-600' : 'text-red-600'}`;
-            }
-
-            sample.cubes.forEach((cube, cubeIndex) => {
-                document.getElementById(`cube-${sampleIndex}-${cubeIndex}-density`).textContent = isNaN(cube.density) ? '0.00' : cube.density.toFixed(2);
-                document.getElementById(`cube-${sampleIndex}-${cubeIndex}-strength`).textContent = isNaN(cube.strength) ? '0.00' : cube.strength.toFixed(2);
-                document.getElementById(`cube-${sampleIndex}-${cubeIndex}-variation`).textContent = isNaN(cube.variation) ? '0.00' : cube.variation.toFixed(2);
-                document.getElementById(`cube-${sampleIndex}-${cubeIndex}-p-variation`).textContent = isNaN(cube.percentVariation) ? '0.00%' : `${cube.percentVariation.toFixed(2)}%`;
+        function calculateSampleMetrics(idx) {
+            const sample = state.samples[idx];
+            const strengths = sample.cubes.map(c => {
+                const m = calculateCubeMetrics(c.L, c.B, c.H, c.W, c.Load);
+                c.density = m.density; c.strength = m.strength; return c.strength;
             });
+            sample.avgStrength = strengths.reduce((a, b) => a + b, 0) / 3;
+            sample.acceptable = sample.cubes.every(c => {
+                c.percentVariation = ((c.strength - sample.avgStrength) / sample.avgStrength) * 100;
+                return Math.abs(c.percentVariation) <= 15;
+            });
+            const avgEl = document.getElementById(`sample-avg-${idx}`), accEl = document.getElementById(`sample-acceptable-${idx}`);
+            if (avgEl) avgEl.textContent = sample.avgStrength.toFixed(2);
+            if (accEl) { accEl.textContent = sample.acceptable ? 'Yes' : 'No'; accEl.className = sample.acceptable ? 'text-green-600 font-bold' : 'text-red-600 font-bold'; }
         }
-
-        /** Handles input changes for a specific cube */
-        function handleCubeInput(sampleIndex, cubeIndex, fieldName, value) {
-            let val = fieldName === 'ID' ? String(value) : parseFloat(value) || 0;
-            const cube = state.samples[sampleIndex].cubes[cubeIndex];
-            
-            switch (fieldName) {
-                case 'ID': cube.id = val; break;
-                case 'L': cube.L = val; break;
-                case 'B': cube.B = val; break;
-                case 'H': cube.H = val; break;
-                case 'W': cube.W = val; break;
-                case 'LOAD': cube.Load = val; break;
-            }
-            calculateSampleMetrics(sampleIndex);
-        }
-
-        // --- Firebase/Persistence Functions ---
-
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
 
         async function initializeFirebase() {
-            try {
-                if (firebaseConfig && window.firebase) {
-                    window.firebase.setLogLevel('debug');
-                    app = window.firebase.initializeApp(firebaseConfig);
-                    db = window.firebase.getFirestore(app);
-                    auth = window.firebase.getAuth(app);
-
-                    let currentUser = null;
-                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                        const userCredential = await window.firebase.signInWithCustomToken(auth, __initial_auth_token);
-                        currentUser = userCredential.user;
-                    } else {
-                        const userCredential = await window.firebase.signInAnonymously(auth);
-                        currentUser = userCredential.user;
-                    }
-
-                    userId = currentUser.uid || crypto.randomUUID();
-                    document.getElementById('display-app-id').textContent = appId;
-                    document.getElementById('display-user-id').textContent = userId;
-                    isAuthReady = true;
-                    console.log('Firebase initialized and user authenticated:', userId);
-                    
-                    enableButtons();
-                    hideLoading();
-                    loadState(true); 
-                } else {
-                    console.error("Firebase config or SDK not found. Persistence disabled.");
-                    enableButtons();
-                    hideLoading();
-                }
-            } catch (error) {
-                console.error("Error during Firebase initialization or sign-in:", error);
-                document.getElementById('display-user-id').textContent = 'ERROR';
-                enableButtons();
-                hideLoading();
-            }
+            const config = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+            if (config && window.firebase) {
+                app = window.firebase.initializeApp(config); db = window.firebase.getFirestore(app); auth = window.firebase.getAuth(app);
+                const user = await window.firebase.signInAnonymously(auth);
+                userId = user.user.uid; document.getElementById('display-user-id').textContent = userId;
+                isAuthReady = true; enableButtons(); hideLoading(); loadState(true);
+            } else { enableButtons(); hideLoading(); }
         }
 
         async function saveState() {
-            if (!db || !isAuthReady) {
-                showToast('Authentication not ready. Please wait.', 'red');
-                return;
-            }
-            try {
-                state.samples.forEach((_, index) => calculateSampleMetrics(index));
-                const stateToSave = JSON.parse(JSON.stringify(state));
-                const docRef = window.firebase.doc(db, 'artifacts', appId, DATA_PATH, userId);
-                await window.firebase.setDoc(docRef, stateToSave, { merge: true });
-                console.log("State successfully saved!");
-                showToast('Data saved successfully!', 'green');
-            } catch (error) {
-                console.error("Error saving state:", error);
-                showToast('Error saving data.', 'red');
-            }
+            if (!db) return showToast('Storage Disabled', 'red');
+            await window.firebase.setDoc(window.firebase.doc(db, 'artifacts', 'default-app-id', DATA_PATH, userId), state, { merge: true });
+            showToast('Saved!', 'green');
         }
 
-        async function loadState(silent = false) {
-            if (!db || !isAuthReady) {
-                if (!silent) showToast('Authentication not ready. Please wait.', 'red');
-                return;
-            }
-            try {
-                const docRef = window.firebase.doc(db, 'artifacts', appId, DATA_PATH, userId);
-                const docSnap = await window.firebase.getDoc(docRef);
-
-                if (docSnap.exists()) {
-                    const loadedState = docSnap.data();
-                    Object.assign(state, loadedState);
-                    
-                    console.log("State successfully loaded.");
-                    updateScreen1UI();
-                    updateScreen2UI(true); 
-
-                    if (state.currentPage === 3) {
-                         calculateFinalResults(true); 
-                    }
-                    navigateTo(state.currentPage);
-                    if (!silent) showToast('Data loaded successfully!', 'green');
-                } else {
-                    if (!silent) showToast('No saved data found for this user. Starting fresh.', 'yellow');
-                    setDefaultDates();
-                }
-            } catch (error) {
-                console.error("Error loading state:", error);
-                if (!silent) showToast('Error loading data.', 'red');
-            }
+        async function loadState(silent) {
+            if (!db) return;
+            const snap = await window.firebase.getDoc(window.firebase.doc(db, 'artifacts', 'default-app-id', DATA_PATH, userId));
+            if (snap.exists()) { Object.assign(state, snap.data()); updateScreen1UI(); updateScreen2UI(true); navigateTo(state.currentPage); }
         }
 
-        function enableButtons() {
-            document.getElementById('load-data-btn').disabled = false;
-            document.getElementById('save-data-btn1').disabled = false;
-            document.getElementById('next-screen-btn').disabled = false;
-            
-            if (document.getElementById('save-data-btn2')) {
-                document.getElementById('save-data-btn2').disabled = false;
-            }
-        }
+        function enableButtons() { ['load-data-btn', 'save-data-btn1', 'next-screen-btn'].forEach(id => document.getElementById(id).disabled = false); }
+        function hideLoading() { document.getElementById('loading-overlay').classList.add('hidden'); }
+        function showToast(m, c) { alert(m); }
 
-        // --- UI Update & Rendering Functions ---
-
-        function showLoading() {
-            document.getElementById('loading-overlay').classList.remove('hidden');
-            document.getElementById('loading-overlay').classList.add('opacity-100');
-        }
-
-        function hideLoading() {
-            document.getElementById('loading-overlay').classList.add('hidden');
-        }
-        
-        function showToast(message, color = 'blue') {
-            let toastEl = document.getElementById('toast');
-            if (!toastEl) {
-                toastEl = document.createElement('div');
-                toastEl.id = 'toast';
-                toastEl.className = 'fixed bottom-4 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-full text-white shadow-xl transition-opacity duration-300 opacity-0 z-50';
-                document.body.appendChild(toastEl);
-            }
-
-            const bgColor = color === 'green' ? 'bg-green-500' : color === 'red' ? 'bg-red-500' : 'bg-blue-500';
-            toastEl.className = toastEl.className.split(' ').filter(c => !c.startsWith('bg-')).join(' ') + ` ${bgColor}`;
-            toastEl.textContent = message;
-            
-            setTimeout(() => { toastEl.classList.remove('opacity-0'); }, 50);
-            setTimeout(() => { toastEl.classList.add('opacity-0'); }, 3000);
-        }
-
-        /** Updates Screen 1 UI elements based on state */
         function updateScreen1UI() {
-            document.getElementById('project-name').value = state.projectName;
-            document.getElementById('location').value = state.location;
-            document.getElementById('concrete-grade').value = state.concreteGrade;
-            document.getElementById('mix-type').value = state.mixType;
-            document.getElementById('quantity').value = state.quantity;
-            document.getElementById('num-samples').value = state.numSamples;
-            document.getElementById('date-casting').value = state.dateCasting;
-            document.getElementById('date-testing').value = state.dateTesting;
-            // NEW: Update standard inputs
-            document.getElementById('reference-standard').value = state.referenceStandard;
+            ['project-name', 'location', 'concrete-grade', 'mix-type', 'quantity', 'num-samples', 'date-casting', 'date-testing', 'reference-standard'].forEach(id => {
+                const key = id.replace(/-([a-z])/g, g => g[1].toUpperCase());
+                document.getElementById(id).value = state[key];
+            });
             document.getElementById('is-pwd-work').checked = state.isPwdWork;
-            
-            updateMinSamplesInfo();
             updateAgeSpecimen();
         }
 
-        /** Updates the minimum samples required info text */
-        function updateMinSamplesInfo() {
-            const minSamples = calculateMinSamples(state.quantity);
-            document.getElementById('min-samples-info').textContent = `Minimum required: ${minSamples}`;
+        function navigateTo(s) {
+            state.currentPage = s;
+            [1, 2, 3].forEach(n => document.getElementById(`screen${n}`).classList.toggle('hidden', n !== s));
+            if (s === 3) updateScreen3UI();
         }
 
-        /** Handles navigation between screens */
-        function navigateTo(screenNum) {
-            state.currentPage = screenNum;
-            
-            document.getElementById('screen1').classList.toggle('hidden', screenNum !== 1);
-            document.getElementById('screen2').classList.toggle('hidden', screenNum !== 2);
-            document.getElementById('screen3').classList.toggle('hidden', screenNum !== 3);
-
-            document.getElementById('nav-step1').className = `p-2 w-1/3 text-center rounded-l-lg transition-colors duration-200 shadow-md ${screenNum === 1 ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-500'}`;
-            document.getElementById('nav-step2').className = `p-2 w-1/3 text-center transition-colors duration-200 shadow-md ${screenNum === 2 ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-500'}`;
-            document.getElementById('nav-step3').className = `p-2 w-1/3 text-center rounded-r-lg transition-colors duration-200 shadow-md ${screenNum === 3 ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-500'}`;
-            
-            document.getElementById('nav-step2').disabled = (state.numSamples < 1);
-            document.getElementById('nav-step3').disabled = (state.verdict === 'PENDING');
-
-            if (screenNum === 2 && isAuthReady) {
-                 document.getElementById('save-data-btn2').disabled = false;
-            } else if (document.getElementById('save-data-btn2')) {
-                 document.getElementById('save-data-btn2').disabled = true;
-            }
-
-            if (screenNum === 3) {
-                updateScreen3UI();
-            }
-        }
-
-        /** Generates the input fields for Screen 2 based on state.numSamples */
-        function updateScreen2UI(recalculateAll = false) {
-            const container = document.getElementById('samples-container');
-            container.innerHTML = '';
-            document.getElementById('total-cubes').textContent = state.numSamples * 3;
-            document.getElementById('results-card').classList.add('hidden');
-            
+        function updateScreen2UI(recalc) {
+            const container = document.getElementById('samples-container'); container.innerHTML = '';
             while (state.samples.length < state.numSamples) {
-                state.samples.push({
-                    cubes: Array(3).fill(null).map((_, i) => ({
-                        id: `Cube ${i + 1}`, 
-                        L: CUBE_DEFAULT_DIMENSION, B: CUBE_DEFAULT_DIMENSION, H: CUBE_DEFAULT_DIMENSION, 
-                        W: 0, Load: 0, 
-                        density: 0, strength: 0, variation: 0, percentVariation: 0
-                    })),
-                    avgStrength: 0,
-                    acceptable: false
-                });
+                state.samples.push({ cubes: Array(3).fill(null).map((_, i) => ({ id: `Cube ${i+1}`, L: 150, B: 150, H: 150, W: 0, Load: 0, density: 0, strength: 0, percentVariation: 0 })), avgStrength: 0, acceptable: false });
             }
-            state.samples.length = state.numSamples; 
-
-            state.samples.forEach((sample, sampleIndex) => {
-                const sampleDiv = document.createElement('div');
-                sampleDiv.className = 'border border-blue-200 p-4 rounded-xl bg-white shadow-md space-y-3';
-                sampleDiv.innerHTML = `
-                    <h3 class="text-lg font-bold text-blue-700 mb-3 border-b pb-2">Sample ${sampleIndex + 1}</h3>
-                    <div class="grid grid-cols-2 gap-4 p-2 bg-blue-50 rounded-lg text-sm font-semibold">
-                        <p>Average Strength: <span id="sample-avg-${sampleIndex}">${sample.avgStrength.toFixed(2)}</span> N/mm²</p>
-                        <p>Acceptable?: <span id="sample-acceptable-${sampleIndex}" class="${sample.acceptable ? 'text-green-600' : 'text-red-600'}">${sample.acceptable ? 'Yes' : 'No'}</span></p>
-                    </div>
-                    <div class="space-y-4" id="sample-cubes-${sampleIndex}"></div>
-                `;
-                container.appendChild(sampleDiv);
-
-                const cubesContainer = sampleDiv.querySelector(`#sample-cubes-${sampleIndex}`);
-
-                sample.cubes.forEach((cube, cubeIndex) => {
-                    const cubeId = `cube-${sampleIndex}-${cubeIndex}`;
-                    const cubeDiv = document.createElement('div');
-                    cubeDiv.className = 'border border-gray-200 p-3 rounded-lg bg-gray-50 space-y-2';
-                    cubeDiv.innerHTML = `
-                        <h4 class="text-base font-semibold text-gray-800">Cube ${cubeIndex + 1}</h4>
-                        <div class="grid grid-cols-2 gap-3 text-sm">
-                            <label class="block">ID
-                                <input type="text" id="${cubeId}-id" value="${cube.id}" placeholder="ID" class="data-input mt-1 w-full border border-gray-300 rounded-md p-2 text-xs">
-                            </label>
-                            <label class="block">Load (kN)
-                                <input type="number" id="${cubeId}-load" value="${cube.Load}" min="0" placeholder="Max Load" class="data-input mt-1 w-full border border-gray-300 rounded-md p-2 text-xs">
-                            </label>
-                        </div>
-                        <div class="grid grid-cols-3 gap-3 text-sm">
-                            <label class="block">L (mm)
-                                <input type="number" id="${cubeId}-L" value="${cube.L}" min="50" class="data-input mt-1 w-full border border-gray-300 rounded-md p-2 text-xs">
-                            </label>
-                            <label class="block">B (mm)
-                                <input type="number" id="${cubeId}-B" value="${cube.B}" min="50" class="data-input mt-1 w-full border border-gray-300 rounded-md p-2 text-xs">
-                            </label>
-                            <label class="block">H (mm)
-                                <input type="number" id="${cubeId}-H" value="${cube.H}" min="50" class="data-input mt-1 w-full border border-gray-300 rounded-md p-2 text-xs">
-                            </label>
-                        </div>
-                        <label class="block text-sm">Weight (kg)
-                            <input type="number" id="${cubeId}-W" value="${cube.W}" min="0" step="0.01" placeholder="Weight (kg)" class="data-input mt-1 w-full border border-gray-300 rounded-md p-2 text-xs">
-                        </label>
-                        
-                        <div class="grid grid-cols-2 gap-3 pt-2 border-t mt-3">
-                            <p class="text-xs text-gray-600">Density (g/cm³): <span id="${cubeId}-density" class="font-semibold text-gray-800">${cube.density.toFixed(2)}</span></p>
-                            <p class="text-xs text-gray-600">Strength (N/mm²): <span id="${cubeId}-strength" class="font-semibold text-gray-800">${cube.strength.toFixed(2)}</span></p>
-                            <p class="text-xs text-gray-600">Variation: <span id="${cubeId}-variation" class="font-semibold text-gray-800">${cube.variation.toFixed(2)}</span></p>
-                            <p class="text-xs text-gray-600">% Var: <span id="${cubeId}-p-variation" class="font-semibold text-gray-800">${cube.percentVariation.toFixed(2)}%</span></p>
-                        </div>
-                    `;
-                    cubesContainer.appendChild(cubeDiv);
-
-                    const inputs = [`${cubeId}-id`, `${cubeId}-L`, `${cubeId}-B`, `${cubeId}-H`, `${cubeId}-W`, `${cubeId}-load`];
-                    inputs.forEach(id => {
-                        document.getElementById(id).addEventListener('input', (e) => handleCubeInput(sampleIndex, cubeIndex, e.target.id.split('-').pop().toUpperCase(), e.target.value));
-                    });
-
-                    if (recalculateAll) {
-                        calculateSampleMetrics(sampleIndex);
-                    }
+            state.samples.length = state.numSamples;
+            state.samples.forEach((s, si) => {
+                const d = document.createElement('div'); d.className = 'p-4 border rounded bg-white shadow';
+                d.innerHTML = `<h3 class="font-bold">Sample ${si+1}</h3><p>Avg: <span id="sample-avg-${si}">0</span> | Accept: <span id="sample-acceptable-${si}">No</span></p><div id="cubes-${si}"></div>`;
+                container.appendChild(d);
+                s.cubes.forEach((c, ci) => {
+                    const cd = document.createElement('div'); cd.className = 'grid grid-cols-2 gap-2 mt-2 p-2 bg-gray-50 rounded';
+                    cd.innerHTML = `<input type="number" placeholder="Load (kN)" class="p-1 border rounded" value="${c.Load}" id="l-${si}-${ci}"><input type="number" placeholder="W (kg)" class="p-1 border rounded" value="${c.W}" id="w-${si}-${ci}">`;
+                    d.querySelector(`#cubes-${si}`).appendChild(cd);
+                    ['l', 'w'].forEach(k => document.getElementById(`${k}-${si}-${ci}`).addEventListener('input', e => {
+                        if(k==='l') s.cubes[ci].Load = parseFloat(e.target.value) || 0; else s.cubes[ci].W = parseFloat(e.target.value) || 0;
+                        calculateSampleMetrics(si);
+                    }));
                 });
+                if (recalc) calculateSampleMetrics(si);
             });
         }
 
-        /** Populates the summary screen (Screen 3) with all data */
+        function calculateFinalResults() {
+            const accepted = state.samples.filter(s => s.acceptable).map(s => s.avgStrength);
+            state.meanStrength = accepted.length ? accepted.reduce((a, b) => a + b, 0) / accepted.length : 0;
+            state.minStrength = accepted.length ? Math.min(...accepted) : 0;
+            const fck = state.concreteGrade;
+            if (state.isPwdWork) {
+                if (state.quantity > 30) { state.requiredMean = fck + 3; state.requiredMin = fck - 3; }
+                else { state.requiredMean = fck + 4; state.requiredMin = fck - 2; }
+            } else { state.requiredMean = fck + 4; state.requiredMin = fck - 4; }
+            state.verdict = (state.meanStrength >= state.requiredMean && state.minStrength >= state.requiredMin) ? 'PASS' : 'FAIL';
+            navigateTo(3);
+        }
+
         function updateScreen3UI() {
-            state.samples.forEach((_, index) => calculateSampleMetrics(index));
-
-            // --- Project Information ---
-            document.getElementById('sum-project-name').textContent = state.projectName || 'N/A';
-            document.getElementById('sum-location').textContent = state.location || 'N/A';
-            document.getElementById('sum-concrete-grade').textContent = state.concreteGrade;
-            document.getElementById('sum-mix-type').textContent = state.mixType;
-            document.getElementById('sum-quantity').textContent = state.quantity;
-            document.getElementById('sum-num-samples').textContent = state.numSamples;
-            document.getElementById('sum-date-casting').textContent = state.dateCasting;
-            document.getElementById('sum-date-testing').textContent = state.dateTesting;
-            document.getElementById('sum-age-specimen').textContent = state.ageSpecimen;
-            
-            // UPDATED: Populate References with full TC name
-            let references = state.referenceStandard;
-            if (state.isPwdWork) {
-                references += ", TC CE/DESIGN/QC/15/2019 dated 16/05/2019";
-            }
-            document.getElementById('sum-references').textContent = references;
-
-
-            // --- Results Information ---
-            updateResultsCard('sum-card'); // Use helper to populate results card
-
-            // --- Full Data Table ---
-            const tableBody = document.querySelector('#sum-data-table tbody');
-            tableBody.innerHTML = ''; 
-
-            state.samples.forEach((sample, sampleIndex) => {
-                const sampleName = `Sample ${sampleIndex + 1}`;
-                sample.cubes.forEach((cube, cubeIndex) => {
-                    const row = tableBody.insertRow();
-                    row.className = cubeIndex === 2 ? 'border-b border-gray-400' : ''; 
-                    
-                    if (cubeIndex === 0) {
-                        const cell = row.insertCell();
-                        cell.rowSpan = 3;
-                        cell.textContent = sampleName;
-                        cell.className = 'sticky left-0 bg-gray-100 font-bold border-r border-gray-300 align-middle';
-                    }
-                    row.insertCell().textContent = cube.id;
-                    row.insertCell().textContent = cube.L.toFixed(0);
-                    row.insertCell().textContent = cube.B.toFixed(0);
-                    row.insertCell().textContent = cube.H.toFixed(0);
-                    row.insertCell().textContent = cube.W.toFixed(2);
-                    row.insertCell().textContent = cube.Load.toFixed(2);
-
-                    const densityCell = row.insertCell();
-                    densityCell.textContent = cube.density.toFixed(2);
-                    densityCell.className = 'bg-yellow-100';
-
-                    const strengthCell = row.insertCell();
-                    strengthCell.textContent = cube.strength.toFixed(2);
-                    strengthCell.className = 'bg-yellow-100';
-                    
-
-
-                    const varCell = row.insertCell();
-                    varCell.textContent = `${cube.percentVariation.toFixed(2)}%`;
-                    varCell.className = `bg-yellow-100 ${Math.abs(cube.percentVariation) > 15 ? 'text-red-600' : 'text-green-600'}`;
-                    
-                    if (cubeIndex === 0) {
-                        const avgCell = row.insertCell();
-                        avgCell.rowSpan = 3;
-                        avgCell.textContent = sample.avgStrength.toFixed(2);
-                        avgCell.className = 'bg-blue-100 font-bold align-middle';
-                        
-                        const acceptCell = row.insertCell();
-                        acceptCell.rowSpan = 3;
-                        acceptCell.textContent = sample.acceptable ? 'YES' : 'NO';
-                        acceptCell.className = `bg-blue-100 font-bold align-middle ${sample.acceptable ? 'text-green-700' : 'text-red-700'}`;
-                    }
-                });
-            });
-            
-            // --- PDF Button ---
-            const pdfButton = document.getElementById('export-pdf-btn3');
-            if (state.verdict === 'PENDING') {
-                pdfButton.disabled = true;
-                pdfButton.textContent = "Generate PDF Report";
-            } else if (!pdfLibrariesReady) {
-                pdfButton.disabled = true;
-                pdfButton.textContent = "PDF Libraries Loading...";
-                console.warn("PDF libraries not ready, button disabled.");
-            } else {
-                pdfButton.disabled = false;
-                pdfButton.textContent = "Generate PDF Report";
-            }
-            pdfButton.onclick = generatePDF;
+            document.getElementById('sum-project-name').textContent = state.projectName;
+            document.getElementById('sum-card-final-verdict').textContent = state.verdict;
+            document.getElementById('sum-card-mean-strength').textContent = state.meanStrength.toFixed(2);
+            document.getElementById('sum-card-min-strength').textContent = state.minStrength.toFixed(2);
+            document.getElementById('sum-card-required-mean').textContent = state.requiredMean.toFixed(2);
+            document.getElementById('sum-card-required-min').textContent = state.requiredMin.toFixed(2);
+            const btn = document.getElementById('export-pdf-btn3'); btn.disabled = !pdfLibrariesReady; btn.onclick = generatePDF;
         }
 
-        // --- Event Handlers ---
-
-        /** Helper to update dynamic result cards on Screen 2 and 3 */
-        function updateResultsCard(cardIdPrefix) {
-            const fck = state.concreteGrade;
-            const Q = state.quantity;
-
-            // Get elements using prefix
-            const meanEl = document.getElementById(`${cardIdPrefix}-mean-strength`);
-            const minEl = document.getElementById(`${cardIdPrefix}-min-strength`);
-            const reqMeanEl = document.getElementById(`${cardIdPrefix}-required-mean`);
-            const reqMinEl = document.getElementById(`${cardIdPrefix}-required-min`);
-            const verdictEl = document.getElementById(`${cardIdPrefix}-final-verdict`);
-            const verdictContainer = document.getElementById(`${cardIdPrefix}-verdict-container`);
-            // Screen 2 has an SD field
-            const sdEl = document.getElementById(`${cardIdPrefix}-sd`);
-            // Labels exist on both cards
-            const reqMeanLabelEl = document.getElementById(`${cardIdPrefix}-required-mean-label`);
-            const reqMinLabelEl = document.getElementById(`${cardIdPrefix}-required-min-label`);
-
-            if (meanEl) meanEl.textContent = state.meanStrength.toFixed(2);
-            if (minEl) minEl.textContent = state.minStrength.toFixed(2);
-            if (reqMeanEl) reqMeanEl.textContent = state.requiredMean.toFixed(2);
-            if (reqMinEl) reqMinEl.textContent = state.requiredMin.toFixed(2);
-
-            if (verdictEl) {
-                verdictEl.textContent = state.verdict;
-                if (cardIdPrefix === 'results-card') { // Screen 2
-                    verdictEl.className = `font-extrabold ${state.verdict.startsWith('PASS') ? 'text-green-600' : 'text-red-600'}`;
-                } else { // Screen 3
-                    verdictEl.className = `${state.verdict.startsWith('PASS') ? 'text-green-700' : 'text-red-700'}`;
-                }
-            }
-            if (verdictContainer) {
-                verdictContainer.className = `p-4 rounded-lg text-center mt-4 ${state.verdict.startsWith('PASS') ? 'bg-green-100' : 'bg-red-100'}`;
-            }
-
-            // Update labels and SD visibility based on PWD mode
-            if (state.isPwdWork) {
-                if (sdEl) sdEl.parentElement.classList.add('hidden'); // Hide SD row on Screen 2
-                
-                let meanLabel = 'Required Mean';
-                let minLabel = 'Required Min';
-
-                if (Q > 30) {
-                    meanLabel = `Required Mean (fck + 3)`;
-                    minLabel = `Required Min (fck - 3)`;
-                } else if (Q >= 6 && Q <= 30) {
-                    meanLabel = `Required Mean (fck + 4)`;
-                    minLabel = `Required Min (fck - 2)`;
-                } else { // Q < 6
-                    meanLabel = `Required Mean (fck + 4)`;
-                    minLabel = `Required Min (N/A)`;
-                }
-                
-                if (reqMeanLabelEl) reqMeanLabelEl.textContent = meanLabel;
-                if (reqMinLabelEl) reqMinLabelEl.textContent = minLabel;
-
-            } else {
-                // IS 456 Mode
-                if (sdEl) {
-                    sdEl.parentElement.classList.remove('hidden');
-                    sdEl.textContent = state.sd;
-                }
-                if (reqMeanLabelEl) reqMeanLabelEl.textContent = 'Required Mean (IS 456)';
-                if (reqMinLabelEl) reqMinLabelEl.textContent = 'Required Min (IS 456)';
-            }
-        }
-
-
-        /** Calculates final results based on PWD or IS 456 rules */
-        function calculateFinalResults(isLoad = false) {
-            state.samples.forEach((_, index) => calculateSampleMetrics(index));
-
-            const acceptedSampleStrengths = state.samples
-                .filter(s => s.acceptable)
-                .map(s => s.avgStrength);
-
-            let meanStrength = 0;
-            let minStrength = 0;
-
-            if (acceptedSampleStrengths.length > 0) {
-                meanStrength = acceptedSampleStrengths.reduce((sum, s) => sum + s, 0) / acceptedSampleStrengths.length;
-                minStrength = Math.min(...acceptedSampleStrengths);
-            }
-            state.meanStrength = meanStrength;
-            state.minStrength = minStrength;
-
-            const fck = state.concreteGrade;
-            const Q = state.quantity;
-            let passMean = false;
-            let passMin = false;
-
-            if (state.isPwdWork) {
-                // --- PWD (Kerala) Logic ---
-                state.sd = 0; // SD is not used
-
-                if (Q > 30) {
-                    // Case 1: Q > 30 m³
-                    state.requiredMean = fck + 3;
-                    state.requiredMin = fck - 3;
-                    passMean = state.meanStrength >= state.requiredMean;
-                    passMin = state.minStrength >= state.requiredMin;
-                } else if (Q >= 6 && Q <= 30) {
-                    // Case 2: 6 <= Q <= 30 m³
-                    state.requiredMean = fck + 4;
-                    state.requiredMin = fck - 2;
-                    passMean = state.meanStrength >= state.requiredMean;
-                    passMin = state.minStrength >= state.requiredMin;
-                } else {
-                    // Case 3: Q < 6 m³ (Assumes 1 sample)
-                    state.requiredMean = fck + 4;
-                    state.requiredMin = 0; // Min test doesn't apply
-                    passMean = state.meanStrength >= state.requiredMean;
-                    passMin = true; // Only the mean test matters
-                }
-
-            } else {
-                // --- Standard IS 456 Logic ---
-                let sd = 0;
-                if (fck < 20) sd = 3;
-                else if (fck >= 20 && fck <= 30) sd = 4;
-                else sd = 5;
-                state.sd = sd;
-
-                const sdvTerm = 0.825 * sd;
-                const requiredIncrease = Math.max(4, sdvTerm);
-                state.requiredMean = fck + requiredIncrease;
-                state.requiredMin = fck - 4;
-
-                passMean = state.meanStrength >= state.requiredMean;
-                passMin = state.minStrength >= state.requiredMin;
-            }
-
-            // --- Determine Verdict ---
-            if (acceptedSampleStrengths.length === 0) {
-                state.verdict = 'FAIL (No Accepted Samples)';
-            } else {
-                state.verdict = (passMean && passMin) ? 'PASS' : 'FAIL';
-            }
-            
-            // --- Update Screen 2 Results Card ---
-            document.getElementById('results-card').classList.remove('hidden');
-            updateResultsCard('results-card');
-            
-            if (!isLoad) {
-                navigateTo(3);
-            }
-        }
-
-        /** Generates a PDF report with standards and dynamic criteria */
+        /** UPDATED generatePDF with professional header */
         function generatePDF() {
-            if (!pdfLibrariesReady) {
-                showToast('PDF libraries are still loading. Please wait a moment.', 'red');
-                return;
-            }
-            
             const { jsPDF } = window.jspdf;
-            const doc = new jsPDF('l', 'mm', 'a4'); // 'l' for landscape
-
-            if (state.verdict === 'PENDING') {
-                showToast('Please calculate the final results first.', 'red');
-                return;
-            }
-
+            const doc = new jsPDF('p', 'mm', 'a4'), margin = 15, pageWidth = doc.internal.pageSize.getWidth();
             let y = 15;
-            const lineHeight = 7;
-            const margin = 15;
-            const docWidth = doc.internal.pageSize.getWidth();
 
-            // --- Header ---
-            doc.setFontSize(18);
-            doc.setFont(undefined, 'bold');
-            doc.text("Concrete Cube Compressive Strength Report", docWidth / 2, y, { align: 'center' });
-            y += lineHeight;
+            // Header Section
+            doc.setFont("helvetica", "bold").setFontSize(18);
+            doc.text("QUALITY CONTROL LABORATORY", pageWidth / 2, y, { align: "center" });
+            y += 7;
+            doc.setFontSize(10).setFont("helvetica", "normal");
+            doc.text("Building Materials Testing & Certification Division", pageWidth / 2, y, { align: "center" });
+            y += 5;
+            doc.text("123 Engineering Way, Industrial Sector, City - 682001", pageWidth / 2, y, { align: "center" });
+            y += 5;
+            doc.text("Email: lab-support@qc.org | Phone: +91 96568 40794", pageWidth / 2, y, { align: "center" });
+            y += 4;
+            doc.setLineWidth(0.5).line(margin, y, pageWidth - margin, y);
+            y += 10;
 
-            doc.setFontSize(12);
-            doc.setFont(undefined, 'normal');
-            doc.text(`Report Generated: ${new Date().toLocaleDateString()}`, docWidth / 2, y, { align: 'center' });
-            y += lineHeight;
-            
-            // --- UPDATED: Add References below Header ---
-            let references = `Reference Standard: ${state.referenceStandard}`;
-            if (state.isPwdWork) {
-                // Use full TC name
-                references += ", Kerala PWD TC CE/DESIGN/QC/15/2019 dated 16/05/2019";
-            }
-            doc.setFontSize(10);
-            doc.text(references, docWidth / 2, y, { align: 'center' });
-            y += lineHeight * 2; // Add extra space after references
+            // Report Title
+            doc.setFontSize(14).setFont(undefined, 'bold');
+            doc.text("CONCRETE COMPRESSIVE STRENGTH TEST REPORT", pageWidth / 2, y, { align: 'center' });
+            y += 10;
 
-
-            // --- Project Details ---
-            doc.setFontSize(14);
-            doc.setFont(undefined, 'bold');
-            doc.text("Project Details", margin, y);
-            y += lineHeight;
-
-            doc.setFontSize(10);
-            doc.setFont(undefined, 'normal');
-            
-            const col1_x = margin;
-            const col2_x = margin + 100;
-            let y_col1 = y;
-            let y_col2 = y;
-            
-            doc.text(`Project Name: ${state.projectName}`, col1_x, y_col1); y_col1 += lineHeight;
-            doc.text(`Location: ${state.location}`, col1_x, y_col1); y_col1 += lineHeight;
-            doc.text(`Concrete Grade: M${state.concreteGrade} N/mm²`, col1_x, y_col1); y_col1 += lineHeight;
-            doc.text(`Mix Type: ${state.mixType}`, col1_x, y_col1); y_col1 += lineHeight;
-            
-            doc.text(`Quantity of Concrete: ${state.quantity} m³`, col2_x, y_col2); y_col2 += lineHeight;
-            doc.text(`Number of Samples Tested: ${state.numSamples}`, col2_x, y_col2); y_col2 += lineHeight;
-            doc.text(`Date of Casting: ${state.dateCasting}`, col2_x, y_col2); y_col2 += lineHeight;
-            doc.text(`Date of Testing: ${state.dateTesting}`, col2_x, y_col2); y_col2 += lineHeight;
-            doc.text(`Age of Specimen: ${state.ageSpecimen} Days`, col2_x, y_col2); y_col2 += lineHeight;
-
-            // --- REMOVED: References text from this section ---
-            
-            y = Math.max(y_col1, y_col2) + lineHeight;
-
-            // --- Acceptance Criteria ---
-            doc.setFontSize(14);
-            doc.setFont(undefined, 'bold');
-            doc.text("Acceptance Criteria & Verdict", margin, y);
-            y += lineHeight;
-            doc.setFontSize(10);
-            doc.setFont(undefined, 'normal');
-            
-            y_col1 = y;
-            y_col2 = y;
-
-            // Dynamic Criteria Text in PDF
-            if (state.isPwdWork) {
-                const Q = state.quantity;
-                let meanText = `Required Mean Strength: ${state.requiredMean.toFixed(2)} N/mm²`;
-                let minText = `Required Min Strength: ${state.requiredMin.toFixed(2)} N/mm²`;
-                
-                if (Q > 30) {
-                    meanText += " (fck + 3)";
-                    minText += " (fck - 3)";
-                } else if (Q >= 6 && Q <= 30) {
-                    meanText += " (fck + 4)";
-                    minText += " (fck - 2)";
-                } else {
-                    meanText += " (fck + 4)";
-                    minText = "Required Min Strength: N/A";
-                }
-                doc.text(meanText, col1_x, y_col1); y_col1 += lineHeight;
-                doc.text(minText, col1_x, y_col1); y_col1 += lineHeight;
-            } else {
-                // Standard IS 456
-                doc.text(`IS 456 Standard Deviation (SD): ${state.sd} N/mm²`, col1_x, y_col1); y_col1 += lineHeight;
-                doc.text(`Required Mean Strength: ${state.requiredMean.toFixed(2)} N/mm²`, col1_x, y_col1); y_col1 += lineHeight;
-                doc.text(`Required Min Strength: ${state.requiredMin.toFixed(2)} N/mm²`, col1_x, y_col1); y_col1 += lineHeight;
-            }
-
-            doc.setFontSize(12);
-            doc.setFont(undefined, 'bold');
-            doc.text(`Test Result Verdict: ${state.verdict}`, col2_x, y_col2); y_col2 += lineHeight;
-            doc.setFontSize(10);
-            doc.setFont(undefined, 'normal');
-            doc.text(`Observed Mean Strength (Accepted Samples): ${state.meanStrength.toFixed(2)} N/mm²`, col2_x, y_col2); y_col2 += lineHeight;
-            doc.text(`Observed Min Strength (Accepted Samples): ${state.minStrength.toFixed(2)} N/mm²`, col2_x, y_col2); y_col2 += lineHeight;
-
-            y = Math.max(y_col1, y_col2) + lineHeight * 2;
-
-
-            // --- Detailed Sample Data Table ---
-            doc.setFontSize(14);
-            doc.setFont(undefined, 'bold');
-            doc.text("Detailed Sample Data & Calculation Trace", margin, y);
-            y += lineHeight;
-
-            const tableColumns = [
-                { header: 'Sample', dataKey: 'sample' },
-                { header: 'Cube ID', dataKey: 'id' },
-                { header: 'L', dataKey: 'L' }, { header: 'B', dataKey: 'B' }, { header: 'H', dataKey: 'H' },
-                { header: 'Weight (kg)', dataKey: 'W' },
-                { header: 'Load (kN)', dataKey: 'Load' },
-                { header: 'Density', dataKey: 'density' },    
-                { header: 'Strength', dataKey: 'strength' },
-
-                { header: '% Var', dataKey: 'pVar' },
-                { header: 'Avg Strength', dataKey: 'avg' },
-                { header: 'Accept', dataKey: 'accept' }
+            // Project Info Table
+            const projData = [
+                ["Project Name", state.projectName || 'N/A', "Concrete Grade", `M${state.concreteGrade}`],
+                ["Location", state.location || 'N/A', "Mix Type", state.mixType],
+                ["Quantity", `${state.quantity} m³`, "Samples", state.numSamples],
+                ["Date Cast", state.dateCasting, "Specimen Age", `${state.ageSpecimen} Days`]
             ];
-            
-            const tableRows = [];
-            state.samples.forEach((sample, sampleIndex) => {
-                const sampleName = `S-${sampleIndex + 1}`;
-                const avgStrengthText = (sample.avgStrength && sample.avgStrength > 0) ? sample.avgStrength.toFixed(2) : 'N/A';
-                const acceptableText = (sample.avgStrength && sample.avgStrength > 0) ? (sample.acceptable ? 'YES' : 'NO') : 'N/A';
+            doc.autoTable({ startY: y, body: projData, theme: 'grid', styles: { fontSize: 9 }, columnStyles: { 0: { fontStyle: 'bold', fillColor: [240, 240, 240] }, 2: { fontStyle: 'bold', fillColor: [240, 240, 240] } } });
+            y = doc.lastAutoTable.finalY + 10;
 
-                sample.cubes.forEach((cube, cubeIndex) => {
-                    const row = {
-                        sample: sampleName,
-                        id: cube.id,
-                        L: cube.L.toFixed(0), B: cube.B.toFixed(0), H: cube.H.toFixed(0),
-                        W: cube.W.toFixed(2),
-                        Load: cube.Load.toFixed(2),
-                        density: cube.density.toFixed(2),                        
-                        strength: cube.strength.toFixed(2),
+            // Verdict & Results
+            doc.setFontSize(12).setFont(undefined, 'bold').text(`Test Verdict: ${state.verdict}`, margin, y);
+            y += 7;
+            doc.setFontSize(10).setFont(undefined, 'normal');
+            doc.text(`Mean Strength: ${state.meanStrength.toFixed(2)} (Req: ${state.requiredMean.toFixed(2)})`, margin, y);
+            doc.text(`Min Strength: ${state.minStrength.toFixed(2)} (Req: ${state.requiredMin.toFixed(2)})`, pageWidth - margin, y, { align: 'right' });
+            y += 10;
 
-                        pVar: `${cube.percentVariation.toFixed(2)}%`,
-                        avg: avgStrengthText,
-                        accept: acceptableText
-                    };
-                    tableRows.push(row);
-                });
-            });
+            // Data Table
+            const rows = [];
+            state.samples.forEach((s, si) => s.cubes.forEach(c => rows.push([`S-${si+1}`, c.id, c.L, c.B, c.H, c.W.toFixed(2), c.Load.toFixed(2), c.density.toFixed(2), c.strength.toFixed(2), `${c.percentVariation.toFixed(2)}%`])));
+            doc.autoTable({ startY: y, head: [["Sample", "Cube ID", "L", "B", "H", "W(kg)", "Load(kN)", "Density", "Strength", "%Var"]], body: rows, theme: 'striped', headStyles: { fillColor: [59, 130, 246] }, styles: { fontSize: 8, halign: 'center' } });
 
-            doc.autoTable({
-                startY: y,
-                head: [tableColumns.map(col => col.header)],
-                body: tableRows.map(row => Object.values(row)),
-                theme: 'grid',
-                styles: { fontSize: 8, cellPadding: 1, overflow: 'linebreak', halign: 'center', textColor: '#000000' },
-                headStyles: { fillColor: [52, 73, 94], fontStyle: 'bold', textColor: '#FFFFFF' }, 
-                didParseCell: (data) => {
-                    const col = data.column.index;
-                    
-                    if (col >= 7 && col <= 9) { // Strength, Density, %Var
-                        data.cell.styles.fillColor = [255, 255, 204]; // Yellow
-                        data.cell.styles.textColor = '#000000'; // Black text
-                    }
-                    if (col === 10 || col === 11) { // Avg Strength, Accept
-                         data.cell.styles.fillColor = [204, 229, 255]; // Blue
-                         data.cell.styles.textColor = '#000000'; // Black text
-                         if (col === 11 && (data.cell.text === 'NO' || data.cell.text === 'N/A')) {
-                             data.cell.styles.textColor = [255, 0, 0]; // Keep "NO" as red
-                         }
-                    }
-                    if (data.row.index % 3 === 2) { 
-                        data.cell.styles.borderBottom = { width: 0.5, color: 50 };
-                    }
-                }
-            });
-
-            doc.save(`${state.projectName.replace(/[^a-z0-9]/gi, '_') || 'Test_Report'}_${new Date().toISOString().split('T')[0]}.pdf`);
+            doc.save(`${state.projectName || 'Report'}_QC.pdf`);
         }
 
-        // --- Modal & Toast Handlers ---
-
-        function showModal({ title, message, onConfirm, onCancel }) {
-            document.getElementById('modal-title').textContent = title;
-            document.getElementById('modal-message').textContent = message;
-
-            const modalContainer = document.getElementById('modal-container');
-            const modalContent = document.getElementById('modal-content');
-
-            modalContainer.classList.remove('hidden');
-            modalContainer.classList.add('flex');
-            
-            setTimeout(() => {
-                modalContent.classList.remove('scale-95', 'opacity-0');
-                modalContent.classList.add('scale-100', 'opacity-100');
-            }, 50);
-
-            document.getElementById('modal-confirm-btn').onclick = () => {
-                hideModal();
-                onConfirm();
-            };
-            document.getElementById('modal-cancel-btn').onclick = () => {
-                hideModal();
-                onCancel();
-            };
-        }
-
-        function hideModal() {
-            const modalContainer = document.getElementById('modal-container');
-            const modalContent = document.getElementById('modal-content');
-
-            modalContent.classList.remove('scale-100', 'opacity-100');
-            modalContent.classList.add('scale-95', 'opacity-0');
-
-            setTimeout(() => {
-                modalContainer.classList.remove('flex');
-                modalContainer.classList.add('hidden');
-            }, 300);
-        }
-
-        // --- Core Application Logic for Screen 1 ---
-        
-        /** Generic handler to update state from input fields */
-        function handleInput(e) {
-            const { id, value, type } = e.target;
-            let val = value;
-            
-            if (type === 'number') {
-                val = parseFloat(value) || 0; 
-            } else if (type === 'checkbox') {
-                val = e.target.checked;
-            }
-
-            switch (id) {
-                case 'project-name': state.projectName = String(val); break;
-                case 'location': state.location = String(val); break;
-                case 'concrete-grade': state.concreteGrade = val; break;
-                case 'mix-type': state.mixType = String(val); break;
-                case 'quantity': 
-                    state.quantity = val;
-                    updateMinSamplesInfo();
-                    break;
-                case 'num-samples': state.numSamples = val; break;
-                case 'date-casting': 
-                    state.dateCasting = String(val); 
-                    updateAgeSpecimen();
-                    break;
-                case 'date-testing': 
-                    state.dateTesting = String(val); 
-                    updateAgeSpecimen();
-                    break;
-                // NEW: Handle standard inputs
-                case 'reference-standard': state.referenceStandard = String(val); break;
-                case 'is-pwd-work': state.isPwdWork = val; break;
-            }
-        }
-
-        /** Handles validation and navigation from Screen 1 to Screen 2 */
-        function handleNextScreen() {
-            if (!state.projectName || state.projectName.trim() === '') {
-                showToast('Please enter a Project Name.', 'red');
-                return;
-            }
-            if (state.concreteGrade < 15) {
-                showToast('Concrete Grade must be M15 or higher.', 'red');
-                return;
-            }
-            if (state.quantity <= 0 || isNaN(state.quantity)) {
-                showToast('Please enter a valid Quantity (m³).', 'red');
-                return;
-            }
-            if (state.numSamples <= 0 || isNaN(state.numSamples)) {
-                showToast('Please enter the Number of Samples.', 'red');
-                return;
-            }
-            if (state.ageSpecimen <= 0) {
-                showToast('Please ensure both dates are valid, correctly formatted (DD/MM/YYYY), and Casting Date is before Testing Date.', 'red');
-                return;
-            }
-
-            const requiredMinSamples = calculateMinSamples(state.quantity);
-            if (state.numSamples < requiredMinSamples) {
-                 showModal({
-                    title: 'Insufficient Samples',
-                    message: `For ${state.quantity} m³ of concrete, the minimum required samples (IS 456) is ${requiredMinSamples}. You have entered ${state.numSamples}. Do you wish to proceed anyway?`,
-                    onConfirm: () => finalizeNavigationToScreen2(),
-                    onCancel: () => {}
-                });
-                return;
-            }
-
-            finalizeNavigationToScreen2();
-        }
-
-        function finalizeNavigationToScreen2() {
-            updateScreen2UI();
-            navigateTo(2);
-        }
-
-        // --- Initialization and Event Wiring ---
         (function() {
-            showLoading();
-            checkPdfLibraries();
-            setDefaultDates();
-            initializeFirebase();
-
-            // Attach Screen 1 Listeners (Using generic handler)
-            const screen1Inputs = [
-                'project-name', 'location', 'concrete-grade', 'mix-type', 
-                'quantity', 'num-samples', 'date-casting', 'date-testing',
-                'reference-standard', 'is-pwd-work' // Add new inputs
-            ];
-            screen1Inputs.forEach(id => {
-                document.getElementById(id).addEventListener('input', handleInput);
-            });
-            
-            document.getElementById('next-screen-btn').addEventListener('click', handleNextScreen);
-            document.getElementById('save-data-btn1').addEventListener('click', saveState);
-            document.getElementById('load-data-btn').addEventListener('click', () => loadState(false));
-
-            // Attach Screen 2 Listeners
-            document.getElementById('back-screen-btn').addEventListener('click', () => navigateTo(1));
-            document.getElementById('save-data-btn2').addEventListener('click', saveState);
-            document.getElementById('calculate-results-btn').addEventListener('click', () => calculateFinalResults(false));
-
-            // Attach Navigation Listeners
-            document.getElementById('nav-step1').addEventListener('click', () => navigateTo(1));
-            document.getElementById('nav-step2').addEventListener('click', () => navigateTo(2));
-            document.getElementById('nav-step3').addEventListener('click', () => navigateTo(3));
-            
-            // Attach Screen 3 Listeners
-            document.getElementById('back-screen2-btn').addEventListener('click', () => navigateTo(2));
-
-            navigateTo(1); // Set initial screen
+            checkPdfLibraries(); initializeFirebase();
+            ['project-name', 'location', 'concrete-grade', 'mix-type', 'quantity', 'num-samples', 'date-casting', 'date-testing', 'reference-standard'].forEach(id => document.getElementById(id).addEventListener('input', e => {
+                const key = id.replace(/-([a-z])/g, g => g[1].toUpperCase());
+                state[key] = (e.target.type === 'number') ? parseFloat(e.target.value) : e.target.value;
+                if(id==='quantity') document.getElementById('min-samples-info').textContent = `Min: ${calculateMinSamples(state.quantity)}`;
+                updateAgeSpecimen();
+            }));
+            document.getElementById('is-pwd-work').addEventListener('change', e => state.isPwdWork = e.target.checked);
+            document.getElementById('next-screen-btn').onclick = () => { updateScreen2UI(); navigateTo(2); };
+            document.getElementById('calculate-results-btn').onclick = calculateFinalResults;
+            document.getElementById('save-data-btn1').onclick = saveState;
+            document.getElementById('save-data-btn2').onclick = saveState;
+            document.getElementById('back-screen-btn').onclick = () => navigateTo(1);
+            document.getElementById('back-screen2-btn').onclick = () => navigateTo(2);
+            document.getElementById('load-data-btn').onclick = () => loadState(false);
+            navigateTo(1);
         })();
     }
-    
-    if (typeof mainAppLogic === 'function' && !window.runApplication) {
-        window.runApplication = mainAppLogic;
-        window.onload = window.runApplication;
-    }
-
     </script>
 </body>
-
 </html>
-
