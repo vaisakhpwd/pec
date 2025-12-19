@@ -4,11 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Compressive Strength Calculator</title>
+    <!-- 1. Load Tailwind CSS for styling -->
     <script src="https://cdn.tailwindcss.com"></script>
     
+    <!-- 2. Load PDF Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
     
+    <!-- 3. Load required Firebase SDKs -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
@@ -81,6 +84,7 @@
 </head>
 <body class="bg-gray-50 min-h-screen p-2 md:p-8">
 
+    <!-- Loading Indicator -->
     <div id="loading-overlay" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 transition-opacity duration-300">
         <div class="flex flex-col items-center">
             <div class="animate-spin rounded-full h-16 w-16 border-b-4 border-white mb-4"></div>
@@ -88,12 +92,14 @@
         </div>
     </div>
 
+    <!-- Main Application Container -->
     <div id="app-container" class="max-w-xl mx-auto bg-white shadow-2xl rounded-xl p-4 md:p-6 transition-all duration-300">
         
         <h1 class="text-3xl font-extrabold text-gray-900 mb-6 border-b pb-3 text-center">
             Compressive Strength Calculator
         </h1>
 
+        <!-- Navigation Bar (Updated for 3 Steps) -->
         <div class="flex justify-around mb-6 text-sm font-medium">
             <button id="nav-step1" class="p-2 w-1/3 text-center rounded-l-lg transition-colors duration-200 bg-blue-500 text-white shadow-md">
                 1. Project Details
@@ -106,6 +112,7 @@
             </button>
         </div>
 
+        <!-- Notification/Alert Modal -->
         <div id="modal-container" class="fixed inset-0 bg-gray-900 bg-opacity-75 hidden items-center justify-center z-40">
             <div id="modal-content" class="bg-white p-6 rounded-lg shadow-xl max-w-sm mx-4 transform transition-all duration-300 scale-95 opacity-0">
                 <h3 id="modal-title" class="text-xl font-bold mb-3 text-red-600">Warning!</h3>
@@ -117,6 +124,7 @@
             </div>
         </div>
 
+        <!-- Screen 1: Project Details -->
         <div id="screen1" class="space-y-4">
             <h2 class="text-xl font-semibold text-gray-700">Test Information</h2>
 
@@ -125,6 +133,7 @@
                 <span class="p-1 bg-gray-100 rounded-lg text-gray-600">User ID: <span id="display-user-id" class="font-mono">Loading...</span></span>
             </div>
 
+            <!-- Project and Location -->
             <div>
                 <label for="project-name" class="block text-sm font-medium text-gray-700">Project Name</label>
                 <input type="text" id="project-name" placeholder="[BR/2020/2397] General Civil Work" class="data-input mt-1 block w-full border border-gray-300 rounded-lg shadow-sm p-3 focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
@@ -134,6 +143,7 @@
                 <input type="text" id="location" placeholder="Slab A1P2" class="data-input mt-1 block w-full border border-gray-300 rounded-lg shadow-sm p-3 focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
             </div>
 
+            <!-- Grade and Mix Type -->
             <div class="flex space-x-4">
                 <div class="w-1/2">
                     <label for="concrete-grade" class="block text-sm font-medium text-gray-700">Grade (N/mm²)</label>
@@ -148,6 +158,7 @@
                 </div>
             </div>
 
+            <!-- Quantity and Samples -->
             <div class="flex space-x-4">
                 <div class="w-1/2">
                     <label for="quantity" class="block text-sm font-medium text-gray-700">Quantity (m³)</label>
@@ -160,6 +171,7 @@
                 </div>
             </div>
 
+            <!-- Dates and Age -->
             <div class="grid grid-cols-2 gap-4">
                 <div>
                     <label for="date-casting" class="block text-sm font-medium text-gray-700">Date of Casting (DD/MM/YYYY)</label>
@@ -174,6 +186,7 @@
                 <p class="text-sm font-medium text-blue-700">Age of Specimen: <span id="age-specimen" class="font-bold text-base">0</span> Days</p>
             </div>
 
+            <!-- Reference Standards Section -->
             <div class_id="reference-standards" class="space-y-3 p-4 bg-gray-100 rounded-lg border border-gray-200">
                 <h3 class="text-lg font-semibold text-gray-800">Reference Standards</h3>
                 <div>
@@ -185,12 +198,14 @@
                 </div>
                 <div class="flex items-center space-x-3 mt-3">
                     <input type="checkbox" id="is-pwd-work" class="pwd-checkbox">
+                    <!-- UPDATED LABEL with "TC " -->
                     <label for="is-pwd-work" class="text-sm font-medium text-gray-700 cursor-pointer">
                         Kerala PWD Work? (Applies TC CE/DESIGN/QC/15/2019 dated 16/05/2019)
                     </label>
                 </div>
             </div>
 
+            <!-- Action Buttons Screen 1 -->
             <div class="pt-4 flex justify-between space-x-3">
                 <button id="load-data-btn" class="flex-1 px-4 py-3 bg-gray-200 text-gray-800 rounded-lg font-semibold hover:bg-gray-300 transition-colors" disabled>
                     Load Saved Data
@@ -204,16 +219,21 @@
             </div>
         </div>
 
+        <!-- Screen 2: Data Collection and Results -->
         <div id="screen2" class="hidden space-y-4">
             <h2 class="text-xl font-semibold text-gray-700">Sample Data Input (<span id="total-cubes">0</span> Cubes Total)</h2>
 
+            <!-- Samples Container -->
             <div id="samples-container" class="space-y-6">
-                </div>
+                <!-- Dynamic content will be inserted here -->
+            </div>
 
+            <!-- Results Card (UPDATED with dynamic labels/fields) -->
             <div id="results-card" class="hidden p-4 bg-gray-100 rounded-xl shadow-inner space-y-3">
                 <h3 class="text-lg font-bold text-gray-800 border-b pb-2">Test Results Summary</h3>
                 <p class="text-sm">Mean Compressive Strength (Accepted): <span id="results-card-mean-strength" class="font-semibold text-base text-blue-600">0.00</span> N/mm²</p>
                 <p class="text-sm">Min Compressive Strength (Accepted): <span id="results-card-min-strength" class="font-semibold text-base text-blue-600">0.00</span> N/mm²</p>
+                <!-- SD row will be hidden by JS if PWD work is selected -->
                 <p class="text-sm">Standard Deviation (IS 456): <span id="results-card-sd" class="font-semibold text-base">0</span> N/mm²</p>
 
                 <div class="mt-3 pt-3 border-t">
@@ -225,6 +245,7 @@
                 </div>
             </div>
 
+            <!-- Action Buttons Screen 2 -->
             <div class="pt-4 flex flex-col space-y-3">
                 <button id="calculate-results-btn" class="w-full px-4 py-4 bg-green-600 text-white rounded-lg font-extrabold text-lg hover:bg-green-700 transition-colors shadow-xl">
                     CALCULATE & VIEW SUMMARY (STEP 3)
@@ -240,9 +261,11 @@
             </div>
         </div>
         
+        <!-- Screen 3: Final Summary & Report -->
         <div id="screen3" class="hidden space-y-6">
             <h2 class="text-2xl font-bold text-gray-900 border-b pb-3">Final Compressive Test Report Summary</h2>
 
+            <!-- Project and Specimen Info (UPDATED with References) -->
             <div class="p-4 bg-blue-50 border border-blue-200 rounded-xl space-y-2 shadow-inner">
                 <h3 class="text-xl font-semibold text-blue-800 border-b pb-1">Project Information</h3>
                 <div class="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
@@ -255,14 +278,17 @@
                     <p><strong>Date Cast:</strong> <span id="sum-date-casting"></span></p>
                     <p><strong>Date Test:</strong> <span id="sum-date-testing"></span></p>
                     <p class="col-span-2 text-base pt-2"><strong>Specimen Age:</strong> <span id="sum-age-specimen" class="font-bold text-blue-700"></span> Days</p>
+                    <!-- References field -->
                     <p class="col-span-2 pt-2"><strong>References:</strong> <span id="sum-references" class="font-medium"></span></p>
                 </div>
             </div>
 
+            <!-- Results Section (UPDATED with dynamic labels) -->
             <div class="p-4 bg-green-50 border border-green-200 rounded-xl space-y-3 shadow-lg">
                 <h3 class="text-xl font-semibold text-green-800 border-b pb-1">Acceptance & Strength Results</h3>
                 <div class="grid grid-cols-2 gap-4 text-sm font-medium">
                     <div class="p-3 bg-white rounded-lg border">
+                        <!-- Dynamic Label -->
                         <p class="text-xs text-gray-500" id="sum-card-required-mean-label">Required Mean Strength</p>
                         <p class="text-lg font-extrabold text-green-700"><span id="sum-card-required-mean">0.00</span> N/mm²</p>
                     </div>
@@ -271,6 +297,7 @@
                         <p class="text-lg font-extrabold text-blue-700"><span id="sum-card-mean-strength">0.00</span> N/mm²</p>
                     </div>
                     <div class="p-3 bg-white rounded-lg border">
+                        <!-- Dynamic Label -->
                         <p class="text-xs text-gray-500" id="sum-card-required-min-label">Required Min Strength</p>
                         <p class="text-lg font-extrabold text-green-700"><span id="sum-card-required-min">0.00</span> N/mm²</p>
                     </div>
@@ -284,6 +311,7 @@
                 </div>
             </div>
 
+            <!-- Full Sample Data and Calculation Trace Table -->
             <div class="p-4 bg-gray-100 rounded-xl shadow-md overflow-x-auto">
                 <h3 class="text-xl font-semibold text-gray-700 border-b pb-1 mb-3">Cube Data & Calculation Trace</h3>
                 <table id="sum-data-table" class="summary-table w-full text-xs border-collapse">
@@ -305,10 +333,12 @@
                         </tr>
                     </thead>
                     <tbody>
-                        </tbody>
+                        <!-- Data rows dynamically inserted here -->
+                    </tbody>
                 </table>
             </div>
 
+            <!-- Action Buttons Screen 3 -->
             <div class="pt-4 flex flex-col space-y-3">
                 <button id="export-pdf-btn3" class="w-full px-4 py-4 bg-red-600 text-white rounded-lg font-extrabold text-lg hover:bg-red-700 transition-colors shadow-xl" disabled>
                     Generate PDF Report
@@ -319,12 +349,14 @@
             </div>
         </div>
         
- <footer class="mt-8 pb-4 text-center text-sm text-red-600">
+ <!-- Footer -->
+    <footer class="mt-8 pb-4 text-center text-sm text-red-600">
         <p>Conceived and developed by Vaisakh G.</p>
         <p>Queries and suggestions: WhatsApp 9656840794</p>
     </footer>
     </div>
 
+    <!-- JavaScript Application Logic -->
     <script>
     function mainAppLogic() {
         // Global state and utility variables
@@ -1081,50 +1113,51 @@
                 return;
             }
 
-            const docWidth = doc.internal.pageSize.getWidth();
-            const docHeight = doc.internal.pageSize.getHeight();
-            const margin = 15;
+            let y = 15;
             const lineHeight = 7;
+            const margin = 15;
+            const docWidth = doc.internal.pageSize.getWidth();
 
-           // --- THE EXACT REQUESTED HEADER ---
-            doc.setTextColor(0, 0, 0); // Black Color
+            // --- Header ---
+
+	    doc.setTextColor(0, 0, 0); // Black Color
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(14);
-            doc.text("COLLEGE OF ENGINEERING PATHANAPURAM", w/2, 15, { align: 'center' });
-            
+            doc.text("COLLEGE OF ENGINEERING PATHANAPURAM", docWidth/2, y, { align: 'center' });
+		y += 4;
+
             doc.setFont('helvetica', 'normal');
             doc.setFontSize(10);
-            doc.text("CAPE, Govt of Kerala", w/2, 20, { align: 'center' });
-            doc.text("Elikkatoor P.O, Kollam, Kerala Pin 689696", w/2, 25, { align: 'center' });
-            doc.text("Phone : 0475-2022810, FAX: 0475-2225959", w/2, 30, { align: 'center' });
-            
+            doc.text("CAPE, Govt of Kerala", docWidth/2, y, { align: 'center' });
+		y += 4;
+            doc.text("Elikkatoor P.O, Kollam, Kerala Pin 689696", docWidth/2, y, { align: 'center' });
+		y += 4;
+            doc.text("Phone : 0475-2022810, FAX: 0475-2225959", docWidth/2, y, { align: 'center' });
+		y += 6;
+
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(12);
-            doc.text("MATERIAL TESTING LABORATORY-II", w/2, 37, { align: 'center' });
-            
-            doc.line(15, 42, w-15, 42); // Horizontal separator
-            
-            doc.setFontSize(14);
-            doc.setTextColor(100, 100, 100);
-            doc.text("COMPRESSIVE STRENGTH TEST REPORT", docWidth / 2, 22, { align: 'center' });
-            
-            // --- RESET STYLES FOR CONTENT ---
-            doc.setTextColor(0, 0, 0);
-            let y = 35;
-            
-            // --- Header Info ---
-            doc.setFontSize(10);
+            doc.text("MATERIAL TESTING LABORATORY-II", docWidth/2, y, { align: 'center' });
+		y += 7;
+
+
+            doc.setFontSize(12);
+            doc.setFont(undefined, 'bold');
+            doc.text("Concrete Cube Compressive Strength Report", docWidth / 2, y, { align: 'center' });
+            y += 4;
+
             doc.setFont(undefined, 'normal');
-            doc.text(`Report Generated: ${new Date().toLocaleDateString()}`, docWidth - margin, y - 5, { align: 'right' });
-            
+          
             // --- UPDATED: Add References below Header ---
             let references = `Reference Standard: ${state.referenceStandard}`;
             if (state.isPwdWork) {
+                // Use full TC name
                 references += ", Kerala PWD TC CE/DESIGN/QC/15/2019 dated 16/05/2019";
             }
-            doc.setFontSize(10);
-            doc.text(references, docWidth / 2, y - 5, { align: 'center' });
-            y += lineHeight;
+            doc.setFontSize(12);
+            doc.text(references, docWidth / 2, y, { align: 'center' });
+            y += lineHeight * 2; // Add extra space after references
+
 
             // --- Project Details ---
             doc.setFontSize(14);
@@ -1137,21 +1170,23 @@
             
             const col1_x = margin;
             const col2_x = margin + 100;
-            let y_start = y;
+            let y_col1 = y;
+            let y_col2 = y;
             
-            doc.text(`Project Name: ${state.projectName}`, col1_x, y); y += lineHeight;
-            doc.text(`Location: ${state.location}`, col1_x, y); y += lineHeight;
-            doc.text(`Concrete Grade: M${state.concreteGrade} N/mm²`, col1_x, y); y += lineHeight;
-            doc.text(`Mix Type: ${state.mixType}`, col1_x, y);
+            doc.text(`Project Name: ${state.projectName}`, col1_x, y_col1); y_col1 += lineHeight;
+            doc.text(`Location: ${state.location}`, col1_x, y_col1); y_col1 += lineHeight;
+            doc.text(`Concrete Grade: M${state.concreteGrade} N/mm²`, col1_x, y_col1); y_col1 += lineHeight;
+            doc.text(`Mix Type: ${state.mixType}`, col1_x, y_col1); y_col1 += lineHeight;
             
-            let y_temp = y_start;
-            doc.text(`Quantity of Concrete: ${state.quantity} m³`, col2_x, y_temp); y_temp += lineHeight;
-            doc.text(`Number of Samples Tested: ${state.numSamples}`, col2_x, y_temp); y_temp += lineHeight;
-            doc.text(`Date of Casting: ${state.dateCasting}`, col2_x, y_temp); y_temp += lineHeight;
-            doc.text(`Date of Testing: ${state.dateTesting}`, col2_x, y_temp); y_temp += lineHeight;
-            doc.text(`Age of Specimen: ${state.ageSpecimen} Days`, col2_x, y_temp);
+            doc.text(`Quantity of Concrete: ${state.quantity} m³`, col2_x, y_col2); y_col2 += lineHeight;
+            doc.text(`Number of Samples Tested: ${state.numSamples}`, col2_x, y_col2); y_col2 += lineHeight;
+            doc.text(`Date of Casting: ${state.dateCasting}`, col2_x, y_col2); y_col2 += lineHeight;
+            doc.text(`Date of Testing: ${state.dateTesting}`, col2_x, y_col2); y_col2 += lineHeight;
+            doc.text(`Age of Specimen: ${state.ageSpecimen} Days`, col2_x, y_col2); y_col2 += lineHeight;
 
-            y = Math.max(y, y_temp) + lineHeight * 2;
+            // --- REMOVED: References text from this section ---
+            
+            y = Math.max(y_col1, y_col2) + lineHeight;
 
             // --- Acceptance Criteria ---
             doc.setFontSize(14);
@@ -1161,34 +1196,51 @@
             doc.setFontSize(10);
             doc.setFont(undefined, 'normal');
             
-            y_start = y;
+            y_col1 = y;
+            y_col2 = y;
+
+            // Dynamic Criteria Text in PDF
             if (state.isPwdWork) {
                 const Q = state.quantity;
                 let meanText = `Required Mean Strength: ${state.requiredMean.toFixed(2)} N/mm²`;
                 let minText = `Required Min Strength: ${state.requiredMin.toFixed(2)} N/mm²`;
-                if (Q > 30) { meanText += " (fck + 3)"; minText += " (fck - 3)"; }
-                else if (Q >= 6 && Q <= 30) { meanText += " (fck + 4)"; minText += " (fck - 2)"; }
-                else { meanText += " (fck + 4)"; minText = "Required Min Strength: N/A"; }
-                doc.text(meanText, col1_x, y); y += lineHeight;
-                doc.text(minText, col1_x, y);
+                
+                if (Q > 30) {
+                    meanText += " (fck + 3)";
+                    minText += " (fck - 3)";
+                } else if (Q >= 6 && Q <= 30) {
+                    meanText += " (fck + 4)";
+                    minText += " (fck - 2)";
+                } else {
+                    meanText += " (fck + 4)";
+                    minText = "Required Min Strength: N/A";
+                }
+                doc.text(meanText, col1_x, y_col1); y_col1 += lineHeight;
+                doc.text(minText, col1_x, y_col1); y_col1 += lineHeight;
             } else {
-                doc.text(`IS 456 Standard Deviation (SD): ${state.sd} N/mm²`, col1_x, y); y += lineHeight;
-                doc.text(`Required Mean Strength: ${state.requiredMean.toFixed(2)} N/mm²`, col1_x, y); y += lineHeight;
-                doc.text(`Required Min Strength: ${state.requiredMin.toFixed(2)} N/mm²`, col1_x, y);
+                // Standard IS 456
+                doc.text(`IS 456 Standard Deviation (SD): ${state.sd} N/mm²`, col1_x, y_col1); y_col1 += lineHeight;
+                doc.text(`Required Mean Strength: ${state.requiredMean.toFixed(2)} N/mm²`, col1_x, y_col1); y_col1 += lineHeight;
+                doc.text(`Required Min Strength: ${state.requiredMin.toFixed(2)} N/mm²`, col1_x, y_col1); y_col1 += lineHeight;
             }
 
-            y_temp = y_start;
             doc.setFontSize(12);
             doc.setFont(undefined, 'bold');
-            doc.text(`Test Result Verdict: ${state.verdict}`, col2_x, y_temp); y_temp += lineHeight;
+            doc.text(`Test Result Verdict: ${state.verdict}`, col2_x, y_col2); y_col2 += lineHeight;
             doc.setFontSize(10);
             doc.setFont(undefined, 'normal');
-            doc.text(`Observed Mean Strength (Accepted Samples): ${state.meanStrength.toFixed(2)} N/mm²`, col2_x, y_temp); y_temp += lineHeight;
-            doc.text(`Observed Min Strength (Accepted Samples): ${state.minStrength.toFixed(2)} N/mm²`, col2_x, y_temp);
+            doc.text(`Observed Mean Strength (Accepted Samples): ${state.meanStrength.toFixed(2)} N/mm²`, col2_x, y_col2); y_col2 += lineHeight;
+            doc.text(`Observed Min Strength (Accepted Samples): ${state.minStrength.toFixed(2)} N/mm²`, col2_x, y_col2); y_col2 += lineHeight;
 
-            y = Math.max(y, y_temp) + lineHeight * 2;
+            y = Math.max(y_col1, y_col2) + lineHeight * 2;
+
 
             // --- Detailed Sample Data Table ---
+            doc.setFontSize(14);
+            doc.setFont(undefined, 'bold');
+            doc.text("Detailed Sample Data & Calculation Trace", margin, y);
+            y += lineHeight;
+
             const tableColumns = [
                 { header: 'Sample', dataKey: 'sample' },
                 { header: 'Cube ID', dataKey: 'id' },
@@ -1197,6 +1249,7 @@
                 { header: 'Load (kN)', dataKey: 'Load' },
                 { header: 'Density', dataKey: 'density' },    
                 { header: 'Strength', dataKey: 'strength' },
+
                 { header: '% Var', dataKey: 'pVar' },
                 { header: 'Avg Strength', dataKey: 'avg' },
                 { header: 'Accept', dataKey: 'accept' }
@@ -1205,8 +1258,11 @@
             const tableRows = [];
             state.samples.forEach((sample, sampleIndex) => {
                 const sampleName = `S-${sampleIndex + 1}`;
+                const avgStrengthText = (sample.avgStrength && sample.avgStrength > 0) ? sample.avgStrength.toFixed(2) : 'N/A';
+                const acceptableText = (sample.avgStrength && sample.avgStrength > 0) ? (sample.acceptable ? 'YES' : 'NO') : 'N/A';
+
                 sample.cubes.forEach((cube, cubeIndex) => {
-                    tableRows.push({
+                    const row = {
                         sample: sampleName,
                         id: cube.id,
                         L: cube.L.toFixed(0), B: cube.B.toFixed(0), H: cube.H.toFixed(0),
@@ -1214,10 +1270,12 @@
                         Load: cube.Load.toFixed(2),
                         density: cube.density.toFixed(2),                        
                         strength: cube.strength.toFixed(2),
+
                         pVar: `${cube.percentVariation.toFixed(2)}%`,
-                        avg: (sample.avgStrength > 0) ? sample.avgStrength.toFixed(2) : 'N/A',
-                        accept: (sample.avgStrength > 0) ? (sample.acceptable ? 'YES' : 'NO') : 'N/A'
-                    });
+                        avg: avgStrengthText,
+                        accept: acceptableText
+                    };
+                    tableRows.push(row);
                 });
             });
 
@@ -1226,25 +1284,27 @@
                 head: [tableColumns.map(col => col.header)],
                 body: tableRows.map(row => Object.values(row)),
                 theme: 'grid',
-                styles: { fontSize: 8, cellPadding: 1, halign: 'center', textColor: '#000000' },
+                styles: { fontSize: 8, cellPadding: 1, overflow: 'linebreak', halign: 'center', textColor: '#000000' },
                 headStyles: { fillColor: [52, 73, 94], fontStyle: 'bold', textColor: '#FFFFFF' }, 
                 didParseCell: (data) => {
                     const col = data.column.index;
-                    if (col >= 7 && col <= 9) { data.cell.styles.fillColor = [255, 255, 204]; }
-                    if (col === 10 || col === 11) { 
-                         data.cell.styles.fillColor = [204, 229, 255];
-                         if (col === 11 && data.cell.text === 'NO') data.cell.styles.textColor = [255, 0, 0];
+                    
+                    if (col >= 7 && col <= 9) { // Strength, Density, %Var
+                        data.cell.styles.fillColor = [255, 255, 204]; // Yellow
+                        data.cell.styles.textColor = '#000000'; // Black text
                     }
-                    if (data.row.index % 3 === 2) { data.cell.styles.borderBottom = { width: 0.5, color: 50 }; }
+                    if (col === 10 || col === 11) { // Avg Strength, Accept
+                         data.cell.styles.fillColor = [204, 229, 255]; // Blue
+                         data.cell.styles.textColor = '#000000'; // Black text
+                         if (col === 11 && (data.cell.text === 'NO' || data.cell.text === 'N/A')) {
+                             data.cell.styles.textColor = [255, 0, 0]; // Keep "NO" as red
+                         }
+                    }
+                    if (data.row.index % 3 === 2) { 
+                        data.cell.styles.borderBottom = { width: 0.5, color: 50 };
+                    }
                 }
             });
-
-            // --- CUSTOM FOOTER TEXT ---
-            const finalY = docHeight - 15;
-            doc.setFontSize(9);
-            doc.setTextColor(150, 150, 150);
-            doc.text("Conceived and developed by Vaisakh G.", margin, finalY);
-            doc.text("Queries and suggestions: WhatsApp 9656840794", docWidth - margin, finalY, { align: 'right' });
 
             doc.save(`${state.projectName.replace(/[^a-z0-9]/gi, '_') || 'Test_Report'}_${new Date().toISOString().split('T')[0]}.pdf`);
         }
@@ -1413,5 +1473,6 @@
 
     </script>
 </body>
+
 </html>
 
