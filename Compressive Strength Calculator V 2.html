@@ -1086,11 +1086,23 @@
             const margin = 15;
             const lineHeight = 7;
 
-            // --- CUSTOM HEADER TEXT ---
-            doc.setFontSize(22);
-            doc.setFont(undefined, 'bold');
-            doc.setTextColor(41, 128, 185); // Blue color
-            doc.text("QUALITY CONTROL LAB", docWidth / 2, 15, { align: 'center' });
+           // --- THE EXACT REQUESTED HEADER ---
+            doc.setTextColor(0, 0, 0); // Black Color
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(14);
+            doc.text("COLLEGE OF ENGINEERING PATHANAPURAM", w/2, 15, { align: 'center' });
+            
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(10);
+            doc.text("CAPE, Govt of Kerala", w/2, 20, { align: 'center' });
+            doc.text("Elikkatoor P.O, Kollam, Kerala Pin 689696", w/2, 25, { align: 'center' });
+            doc.text("Phone : 0475-2022810, FAX: 0475-2225959", w/2, 30, { align: 'center' });
+            
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(12);
+            doc.text("MATERIAL TESTING LABORATORY-II", w/2, 37, { align: 'center' });
+            
+            doc.line(15, 42, w-15, 42); // Horizontal separator
             
             doc.setFontSize(14);
             doc.setTextColor(100, 100, 100);
@@ -1402,3 +1414,4 @@
     </script>
 </body>
 </html>
+
