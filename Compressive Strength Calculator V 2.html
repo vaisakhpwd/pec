@@ -499,7 +499,7 @@
         function generatePDF() {
             if (!pdfLibrariesReady) return showToast('Loading libraries...', 'red');
             const { jsPDF } = window.jspdf;
-            const doc = new jsPDF('l', 'mm', 'a4');
+            const doc = new jsPDF('p', 'mm', 'a4');
             const docWidth = doc.internal.pageSize.getWidth(), pageHeight = doc.internal.pageSize.getHeight(), margin = 15;
             let y = 15;
 
@@ -602,3 +602,4 @@
     </script>
 </body>
 </html>
+
