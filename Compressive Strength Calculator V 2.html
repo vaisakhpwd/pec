@@ -73,9 +73,18 @@
                 <span class="p-1 bg-gray-100 rounded-lg text-gray-600">App ID: <span id="display-app-id" class="font-mono"></span></span>
                 <span class="p-1 bg-gray-100 rounded-lg text-gray-600">User ID: <span id="display-user-id" class="font-mono">Loading...</span></span>
             </div>
+	    <div>
+                <label for="ref-no" class="block text-sm font-medium text-gray-700">Reference No.</label>
+                <input type="text" id="ref-no" placeholder="Reference" class="data-input mt-1 block w-full border border-gray-300 rounded-lg shadow-sm p-3 focus:border-blue-500">
+            </div>
+	    <div>
+                <label for="client-name" class="block text-sm font-medium text-gray-700">Client Name</label>
+                <input type="text" id="client-name" placeholder="Client" class="data-input mt-1 block w-full border border-gray-300 rounded-lg shadow-sm p-3 focus:border-blue-500">
+            </div>
+
             <div>
                 <label for="project-name" class="block text-sm font-medium text-gray-700">Project Name</label>
-                <input type="text" id="project-name" placeholder="[BR/2020/2397] General Civil Work" class="data-input mt-1 block w-full border border-gray-300 rounded-lg shadow-sm p-3 focus:border-blue-500">
+                <input type="text" id="project-name" placeholder="General Civil Work" class="data-input mt-1 block w-full border border-gray-300 rounded-lg shadow-sm p-3 focus:border-blue-500">
             </div>
             <div>
                 <label for="location" class="block text-sm font-medium text-gray-700">Location</label>
@@ -169,7 +178,9 @@
             <div class="p-4 bg-blue-50 border border-blue-200 rounded-xl space-y-2 shadow-inner">
                 <h3 class="text-xl font-semibold text-blue-800 border-b pb-1">Project Information</h3>
                 <div class="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-                    <p><strong>Project:</strong> <span id="sum-project-name"></span></p>
+                    <p><strong>Reference No.:</strong> <span id="sum-ref-no"></span></p>
+                    <p><strong>Client:</strong> <span id="sum-client-name"></span></p>
+		    <p><strong>Project:</strong> <span id="sum-project-name"></span></p>
                     <p><strong>Location:</strong> <span id="sum-location"></span></p>
                     <p><strong>Grade:</strong> <span id="sum-concrete-grade"></span> N/mm²</p>
                     <p><strong>Mix Type:</strong> <span id="sum-mix-type"></span></p>
@@ -242,7 +253,7 @@
         const CUBE_DEFAULT_DIMENSION = 150, DATA_PATH = 'public/data/cube_test_reports';
 
         const state = {
-            currentPage: 1, projectName: '', location: '', concreteGrade: 30, mixType: 'RMC', quantity: 95, numSamples: 5, dateCasting: '', dateTesting: '', ageSpecimen: 0,
+            currentPage: 1, refNo: '', clientName: '',  projectName: '', location: '', concreteGrade: 30, mixType: 'RMC', quantity: 95, numSamples: 5, dateCasting: '', dateTesting: '', ageSpecimen: 0,
             referenceStandard: 'IS 456:2000', isPwdWork: false, samples: [], meanStrength: 0, minStrength: 0, sd: 0, requiredMean: 0, requiredMin: 0, verdict: 'PENDING'
         };
         
@@ -378,7 +389,7 @@
         }
 
         function updateScreen1UI() {
-            ['project-name', 'location', 'concrete-grade', 'mix-type', 'quantity', 'num-samples', 'date-casting', 'date-testing', 'reference-standard'].forEach(id => {
+            ['ref-no','client-name', 'project-name', 'location', 'concrete-grade', 'mix-type', 'quantity', 'num-samples', 'date-casting', 'date-testing', 'reference-standard'].forEach(id => {
                 const field = id.replace(/-([a-z])/g, g => g[1].toUpperCase());
                 document.getElementById(id).value = state[field];
             });
@@ -460,7 +471,7 @@
         }
 
         function updateScreen3UI() {
-            ['project-name', 'location', 'concrete-grade', 'mix-type', 'quantity', 'num-samples', 'date-casting', 'date-testing', 'age-specimen'].forEach(id => {
+            ['ref-no', 'client-name', 'project-name', 'location', 'concrete-grade', 'mix-type', 'quantity', 'num-samples', 'date-casting', 'date-testing', 'age-specimen'].forEach(id => {
                 document.getElementById(`sum-${id}`).textContent = state[id.replace(/-([a-z])/g, g => g[1].toUpperCase())];
             });
             document.getElementById('sum-references').textContent = state.referenceStandard + (state.isPwdWork ? ', TC CE/DESIGN/QC/15/2019' : '');
@@ -506,18 +517,20 @@
             doc.text(`Reference Standard: ${state.referenceStandard}${state.isPwdWork ? ', Kerala PWD TC CE/DESIGN/QC/15/2019' : ''}`, docWidth/2, y, { align: 'center' }); y += 10;
 
             // Details
-            doc.setFont(undefined, 'bold').text("Project Details", margin, y); y += 6;
+            doc.setFont(undefined, 'bold').text("Project Details", margin, y); y += 5;
             doc.setFont(undefined, 'normal');
-            doc.text(`Project: ${state.projectName}`, margin, y);
-            doc.text(`Quantity: ${state.quantity} m3`, margin + 120, y); y += 6;
-            doc.text(`Location: ${state.location}`, margin, y);
-            doc.text(`Testing Date: ${state.dateTesting}`, margin + 120, y); y += 6;
+            doc.text(`Reference No: ${state.refNo}`, margin, y); y += 5;
+            doc.text(`Client: ${state.clientName}`, margin, y); y += 5;
+            doc.text(`Project: ${state.projectName}`, margin, y); y += 5;
+            doc.text(`Location: ${state.location}`, margin, y); y += 5;
+            doc.text(`Casting Date: ${state.dateCasting}`, margin, y);
+            doc.text(`Testing Date: ${state.dateTesting}`, margin + 120, y); y += 5;
             doc.text(`Grade: M${state.concreteGrade}`, margin, y);
-            doc.text(`Age: ${state.ageSpecimen} Days`, margin + 120, y); y += 10;
+            doc.text(`Age: ${state.ageSpecimen} Days`, margin + 120, y); y += 5;
 
             // Verdict Section
-            doc.setFont(undefined, 'bold').text(`Verdict: ${state.verdict}`, margin, y);
-            doc.text(`Mean Strength: ${state.meanStrength.toFixed(2)} N/mm2`, margin + 120, y); y += 10;
+            doc.setFont(undefined, 'bold').text(`Minimum Strength: ${state.minStrength.toFixed(2)} N/mm2`, margin, y);
+            doc.text(`Mean Strength: ${state.meanStrength.toFixed(2)} N/mm2`, margin + 120, y); y += 5;
 
             // Table
             const rows = [];
@@ -565,7 +578,7 @@
         // --- INIT ---
         (function() {
             showLoading(); checkPdfLibraries(); setDefaultDates(); initializeFirebase();
-            ['project-name', 'location', 'concrete-grade', 'mix-type', 'quantity', 'num-samples', 'date-casting', 'date-testing', 'reference-standard', 'is-pwd-work'].forEach(id => {
+            ['ref-no', 'client-name','project-name', 'location', 'concrete-grade', 'mix-type', 'quantity', 'num-samples', 'date-casting', 'date-testing', 'reference-standard', 'is-pwd-work'].forEach(id => {
                 document.getElementById(id).addEventListener('input', e => {
                     const val = e.target.type === 'checkbox' ? e.target.checked : (e.target.type === 'number' ? parseFloat(e.target.value) || 0 : e.target.value);
                     state[id.replace(/-([a-z])/g, g => g[1].toUpperCase())] = val;
