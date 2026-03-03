@@ -93,7 +93,7 @@
             <div class="flex space-x-4">
                 <div class="w-1/2">
                     <label for="concrete-grade" class="block text-sm font-medium text-gray-700">Grade (N/mm²)</label>
-                    <input type="number" id="concrete-grade" min="10" placeholder="30" class="data-input mt-1 block w-full border border-gray-300 rounded-lg shadow-sm p-3">
+                    <input type="number" id="concrete-grade" min="0" placeholder="30" class="data-input mt-1 block w-full border border-gray-300 rounded-lg shadow-sm p-3">
                 </div>
                 <div class="w-1/2">
                     <label for="mix-type" class="block text-sm font-medium text-gray-700">Type of Mix</label>
@@ -472,7 +472,11 @@
 
         function updateScreen3UI() {
             ['ref-no', 'client-name', 'project-name', 'location', 'concrete-grade', 'mix-type', 'quantity', 'num-samples', 'date-casting', 'date-testing', 'age-specimen'].forEach(id => {
-                document.getElementById(`sum-${id}`).textContent = state[id.replace(/-([a-z])/g, g => g[1].toUpperCase())];
+                const key = id.replace(/-([a-z])/g, g => g[1].toUpperCase());
+                let value = state[key];
+                // Display logic for UI Grade
+                if (key === "concreteGrade" && parseFloat(value) === 0) value = "Not specified";
+                document.getElementById(`sum-${id}`).textContent = value;
             });
             document.getElementById('sum-references').textContent = state.referenceStandard + (state.isPwdWork ? ', TC CE/DESIGN/QC/15/2019' : '');
             updateResultsCard('sum-card');
@@ -495,7 +499,6 @@
             btn.onclick = generatePDF;
         }
 
-        // --- UPDATED: GENERATE PDF WITH NOTES AND SIGNATURES ---
         function generatePDF() {
             if (!pdfLibrariesReady) return showToast('Loading libraries...', 'red');
             const { jsPDF } = window.jspdf;
@@ -516,23 +519,37 @@
             doc.setFont('helvetica', 'normal').setFontSize(10);
             doc.text(`Reference Standard: ${state.referenceStandard}${state.isPwdWork ? ', Kerala PWD TC CE/DESIGN/QC/15/2019' : ''}`, docWidth/2, y, { align: 'center' }); y += 10;
 
-            // Details
+            // Details Section Header
             doc.setFont(undefined, 'bold').text("Project Details", margin, y); y += 5;
             doc.setFont(undefined, 'normal');
-            doc.text(`Reference No: ${state.refNo}`, margin, y); y += 5;
-            doc.text(`Client: ${state.clientName}`, margin, y); y += 5;
-            doc.text(`Project: ${state.projectName}`, margin, y); y += 5;
-            doc.text(`Location: ${state.location}`, margin, y); y += 5;
+
+            // --- REPLACEMENT: Wrapped Text Helper ---
+            const drawWrappedLabel = (label, value) => {
+                const fullText = `${label}: ${value}`;
+                const splitText = doc.splitTextToSize(fullText, docWidth - (margin * 2));
+                doc.text(splitText, margin, y);
+                y += (splitText.length * 5); // Add 5mm for every line generated
+            };
+
+            // Display "Not specified" if grade is 0
+            const displayGrade = parseFloat(state.concreteGrade) === 0 ? "Not specified" : `M${state.concreteGrade}`;
+
+            drawWrappedLabel("Reference No", state.refNo);
+            drawWrappedLabel("Client", state.clientName);
+            drawWrappedLabel("Project", state.projectName);
+            drawWrappedLabel("Location", state.location);
+            
+            // Fixed Position Fields
             doc.text(`Casting Date: ${state.dateCasting}`, margin, y);
-            doc.text(`Testing Date: ${state.dateTesting}`, margin + 120, y); y += 5;
-            doc.text(`Grade: M${state.concreteGrade}`, margin, y);
-            doc.text(`Age: ${state.ageSpecimen} Days`, margin + 120, y); y += 5;
+            doc.text(`Testing Date: ${state.dateTesting}`, margin + 110, y); y += 5;
+            doc.text(`Grade: ${displayGrade}`, margin, y);
+            doc.text(`Age: ${state.ageSpecimen} Days`, margin + 110, y); y += 7;
 
-            // Verdict Section
+            // Strength Result Highlights
             doc.setFont(undefined, 'bold').text(`Minimum Strength: ${state.minStrength.toFixed(2)} N/mm2`, margin, y);
-            doc.text(`Mean Strength: ${state.meanStrength.toFixed(2)} N/mm2`, margin + 120, y); y += 5;
+            doc.text(`Mean Strength: ${state.meanStrength.toFixed(2)} N/mm2`, margin + 110, y); y += 5;
 
-            // Table
+            // Main Data Table
             const rows = [];
             state.samples.forEach((s, sIdx) => {
                 s.cubes.forEach((c, cIdx) => {
@@ -547,10 +564,10 @@
 
             y = doc.lastAutoTable.finalY + 12;
 
-            // CHECK PAGE SPACE FOR NOTES
+            // Page handling for notes
             if (y + 60 > pageHeight) { doc.addPage(); y = 20; }
 
-            // Notes Section (As in image)
+            // Notes Section with Wrapping
             doc.setFont(undefined, 'bold').setFontSize(11).text("Note:", margin, y); y += 6;
             doc.setFont(undefined, 'normal').setFontSize(10);
             const notes = [
@@ -563,28 +580,33 @@
                 doc.text(split, margin, y); y += (split.length * 5);
             });
 
-            // Signing Space (As in image)
+            // Signatures Section
             y += 25;
-            const sigW = 60, space = (docWidth - 30 - (sigW * 3)) / 2;
-            const sigs = [{ x: margin, l: "PI" }, { x: margin + sigW + space, l: "HoD CE" }, { x: margin + (sigW + space) * 2, l: "Principal" }];
+            const sigW = 50, sigGap = (docWidth - (margin * 2) - (sigW * 3)) / 2;
+            const sigs = [{ x: margin, l: "PI" }, { x: margin + sigW + sigGap, l: "HoD CE" }, { x: margin + (sigW + sigGap) * 2, l: "Principal" }];
             sigs.forEach(s => {
                 doc.line(s.x, y, s.x + sigW, y);
                 doc.setFont(undefined, 'bold').text(s.l, s.x + (sigW/2), y + 6, { align: 'center' });
             });
 
-            doc.save(`${state.projectName.replace(/\s+/g, '_')}_Report.pdf`);
+            // Filename processing
+            const safeName = state.projectName.substring(0, 30).replace(/[^a-z0-9]/gi, '_');
+            doc.save(`${safeName || 'Concrete_Test'}_Report.pdf`);
         }
 
         // --- INIT ---
         (function() {
             showLoading(); checkPdfLibraries(); setDefaultDates(); initializeFirebase();
             ['ref-no', 'client-name','project-name', 'location', 'concrete-grade', 'mix-type', 'quantity', 'num-samples', 'date-casting', 'date-testing', 'reference-standard', 'is-pwd-work'].forEach(id => {
-                document.getElementById(id).addEventListener('input', e => {
-                    const val = e.target.type === 'checkbox' ? e.target.checked : (e.target.type === 'number' ? parseFloat(e.target.value) || 0 : e.target.value);
-                    state[id.replace(/-([a-z])/g, g => g[1].toUpperCase())] = val;
-                    if (id === 'quantity') updateMinSamplesInfo();
-                    if (id.startsWith('date')) updateAgeSpecimen();
-                });
+                const element = document.getElementById(id);
+                if (element) {
+                    element.addEventListener('input', e => {
+                        const val = e.target.type === 'checkbox' ? e.target.checked : (e.target.type === 'number' ? parseFloat(e.target.value) || 0 : e.target.value);
+                        state[id.replace(/-([a-z])/g, g => g[1].toUpperCase())] = val;
+                        if (id === 'quantity') updateMinSamplesInfo();
+                        if (id.startsWith('date')) updateAgeSpecimen();
+                    });
+                }
             });
             document.getElementById('next-screen-btn').onclick = () => { if (state.ageSpecimen > 0 && state.numSamples > 0) { updateScreen2UI(); navigateTo(2); } else showToast('Check inputs', 'red'); };
             document.getElementById('save-data-btn1').onclick = saveState;
@@ -602,4 +624,3 @@
     </script>
 </body>
 </html>
-
