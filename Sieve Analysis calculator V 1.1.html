@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sieve Analysis Calculator & Editor</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+
+    <style>
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script>
+        const { useState, useMemo, useEffect } = React;
+        const e = React.createElement;
+
+        // --- UTILITY ---
+        const formatDateDDMMYYYY = (isoDate) => {
+            if (!isoDate) return '-';
+            const parts = isoDate.split('-');
+            return parts.length === 3 ? `${parts[2]}-${parts[1]}-${parts[0]}` : isoDate;
+        };
+
+        // --- DATA ---
+        const SIEVES = [
+            { id: 80, label: '80 mm' }, { id: 63, label: '63 mm' }, { id: 40, label: '40 mm' },
+            { id: 20, label: '20 mm' }, { id: 16, label: '16 mm' }, { id: 12.5, label: '12.5 mm' },
+            { id: 10, label: '10 mm' }, { id: 4.75, label: '4.75 mm' }, { id: 2.36, label: '2.36 mm' },
+            { id: 1.18, label: '1.18 mm' }, { id: 0.6, label: '600 micron' }, { id: 0.3, label: '300 micron' },
+            { id: 0.15, label: '150 micron' }
+        ];
+
+        const MIN_SAMPLE_WEIGHTS = { 63: 50000, 40: 15000, 20: 2000, 16: 2000, 12.5: 1000, 10: 500, 4.75: 200 };
+        const MAX_RETAINED_COARSE = { 40: [8000, 3500], 20: [4000, 2000], 16: [3000, 1500], 12.5: [3000, 1500], 10: [2000, 1000], 4.75: [1000, 500] };
+        const MAX_RETAINED_FINE = { 2.36: 200, 1.18: 100, 0.6: 75, 0.3: 50, 0.15: 40 };
+
+        const SPECS = {
+            'graded_20': { name: 'Graded: 20 mm', group: 'Coarse Aggregates (Graded)', type: 'coarse', nominalSize: 20, sieves: [40, 20, 16, 12.5, 10, 4.75, 2.36], limits: { 40: [100, 100], 20: [95, 100], 10: [25, 55], 4.75: [0, 10] } },
+            'graded_40': { name: 'Graded: 40 mm', group: 'Coarse Aggregates (Graded)', type: 'coarse', nominalSize: 40, sieves: [80, 63, 40, 20, 16, 12.5, 10, 4.75, 2.36], limits: { 80: [100, 100], 40: [95, 100], 20: [30, 70], 10: [10, 35], 4.75: [0, 5] } },
+            'fine_zone_2': { name: 'Zone II', group: 'Fine Aggregates', type: 'fine', nominalSize: 4.75, sieves: [10, 4.75, 2.36, 1.18, 0.6, 0.3, 0.15], limits: { 10: [100, 100], 4.75: [90, 100], 2.36: [75, 100], 1.18: [55, 90], 0.6: [35, 59], 0.3: [8, 30], 0.15: [0, 10] } }
+        };
+
+        function SieveAnalysisApp() {
+            const [specKey, setSpecKey] = useState('graded_20');
+            const [weights, setWeights] = useState({});
+            const [panWeight, setPanWeight] = useState(0);
+            const [sieveDiameterIdx, setSieveDiameterIdx] = useState(0);
+            const [clientName, setClientName] = useState('Client');
+            const [projectName, setProjectName] = useState('Construction Project');
+            const [refNo, setRefNo] = useState('PEC/CE/SM/1');
+            const [testDate, setTestDate] = useState(new Date().toISOString().split('T')[0]);
+
+            const currentSpec = SPECS[specKey] || SPECS['graded_20'];
+            const sievesToShow = currentSpec.sieves.map(id => SIEVES.find(s => s.id === id));
+
+            const results = useMemo(() => {
+                let total = parseFloat(panWeight) || 0;
+                sievesToShow.forEach(s => total += parseFloat(weights[s.id]) || 0);
+
+                let cum = 0;
+                const rows = sievesToShow.map(s => {
+                    const wt = parseFloat(weights[s.id]) || 0;
+                    const pRet = total > 0 ? (wt / total) * 100 : 0;
+                    cum += pRet;
+                    const pFin = Math.max(0, 100 - cum);
+                    const lim = currentSpec.limits[s.id];
+                    const status = lim ? (pFin >= lim[0] - 0.01 && pFin <= lim[1] + 0.01) : null;
+                    let maxAllowed = currentSpec.type === 'coarse' ? (MAX_RETAINED_COARSE[s.id] ? MAX_RETAINED_COARSE[s.id][sieveDiameterIdx] : null) : MAX_RETAINED_FINE[s.id];
+                    return { s, wt, pRet, cum, pFin, limitStr: lim ? `${lim[0]}-${lim[1]}` : '-', status, isOverloaded: maxAllowed && wt > maxAllowed, maxAllowed };
+                });
+
+                const fmSieves = [80, 40, 20, 10, 4.75, 2.36, 1.18, 0.6, 0.3, 0.15];
+                let fmSum = 0;
+                const cumMap = {};
+                rows.forEach(r => cumMap[r.s.id] = r.cum);
+                fmSieves.forEach(id => {
+                    if (cumMap[id] !== undefined) fmSum += cumMap[id];
+                    else if (currentSpec.type === 'coarse' && id < (rows[rows.length-1]?.s.id || 0)) fmSum += 100;
+                });
+
+                return { total, rows, fm: (fmSum / 100).toFixed(2), isSufficient: total >= (MIN_SAMPLE_WEIGHTS[currentSpec.nominalSize] || 0) };
+            }, [weights, panWeight, currentSpec, sieveDiameterIdx]);
+
+            const generatePDF = () => {
+                const doc = new window.jspdf.jsPDF();
+                doc.setFontSize(14); doc.text("COLLEGE OF ENGINEERING PATHANAPURAM", 105, 20, {align:'center'});
+                doc.setFontSize(12); doc.text("SIEVE ANALYSIS REPORT", 105, 30, {align:'center'});
+                doc.setFontSize(10);
+                doc.text(`Ref: ${refNo}`, 14, 45); doc.text(`Date: ${formatDateDDMMYYYY(testDate)}`, 196, 45, {align:'right'});
+                doc.text(`Client: ${clientName}`, 14, 52); doc.text(`Project: ${projectName}`, 14, 59);
+
+                const tableData = results.rows.map(r => [r.s.label, r.wt, r.pRet.toFixed(2), r.cum.toFixed(2), r.pFin.toFixed(2), r.limitStr, r.status === null ? '-' : (r.status ? 'Pass' : 'FAIL')]);
+                tableData.push(['Pan', panWeight, '-', '-', '-', '-', '-']);
+                tableData.push(['Total', results.total, '100', '-', '-', '-', '-']);
+
+                doc.autoTable({
+                    startY: 70, head: [['Sieve', 'Wt(g)', '% Ret', 'Cum %', '% Finer', 'Limits', 'Status']], body: tableData,
+                    headStyles: {fillColor: [29, 78, 216]}
+                });
+                doc.text(`Fineness Modulus: ${results.fm}`, 14, doc.lastAutoTable.finalY + 10);
+                doc.save(`${refNo.replace(/\//g, '_')}_report.pdf`);
+            };
+
+            return e('div', { className: 'min-h-screen bg-slate-50 pb-10' },
+                e('header', { className: 'bg-blue-700 text-white p-4 sticky top-0 z-20 shadow-md' },
+                    e('div', { className: 'max-w-5xl mx-auto flex justify-between items-center' },
+                        e('h1', { className: 'font-bold text-lg' }, 'Sieve Analysis Pro'),
+                        e('button', { onClick: generatePDF, className: 'bg-white text-blue-700 px-4 py-2 rounded font-bold' }, 'Download PDF')
+                    )
+                ),
+                e('main', { className: 'max-w-5xl mx-auto p-4 space-y-6' },
+                    e('section', { className: 'bg-white p-6 rounded-xl shadow-sm grid grid-cols-1 md:grid-cols-3 gap-4 border' },
+                        e('div', { className: 'md:col-span-2' },
+                            e('label', { className: 'block text-xs font-bold text-slate-500 uppercase' }, 'Client Name'),
+                            e('input', { className: 'w-full border p-2 rounded', value: clientName, onChange: e => setClientName(e.target.value) })
+                        ),
+                        e('div', {},
+                            e('label', { className: 'block text-xs font-bold text-slate-500 uppercase' }, 'Ref Number'),
+                            e('input', { className: 'w-full border p-2 rounded', value: refNo, onChange: e => setRefNo(e.target.value) })
+                        )
+                    ),
+                    e('section', { className: 'bg-white p-6 rounded-xl shadow-sm border' },
+                        e('label', { className: 'block text-sm font-bold text-slate-700 mb-2' }, 'Aggregate Specification'),
+                        e('select', { className: 'w-full border p-3 rounded-lg bg-slate-50', value: specKey, onChange: e => setSpecKey(e.target.value) },
+                            Object.entries(SPECS).map(([k,v]) => e('option', { key: k, value: k }, v.name))
+                        )
+                    ),
+                    e('section', { className: 'bg-white rounded-xl shadow-sm border overflow-hidden' },
+                        e('table', { className: 'w-full text-left text-sm' },
+                            e('thead', { className: 'bg-slate-50 border-b font-bold text-slate-500' },
+                                e('tr', {}, ['Sieve', 'Weight (g)', 'Cum %', '% Finer', 'Limits', 'Status'].map(h => e('th', { className: 'p-4', key: h }, h)))
+                            ),
+                            e('tbody', { className: 'divide-y' },
+                                results.rows.map(r => e('tr', { key: r.s.id },
+                                    e('td', { className: 'p-4 font-medium' }, r.s.label),
+                                    e('td', { className: 'p-4' }, 
+                                        e('input', { type: 'number', className: 'border p-1 w-24 rounded', value: weights[r.s.id] || '', onChange: event => setWeights({...weights, [r.s.id]: event.target.value}) })
+                                    ),
+                                    e('td', { className: 'p-4 text-slate-500' }, r.cum.toFixed(2)),
+                                    e('td', { className: 'p-4 font-bold' }, r.pFin.toFixed(2)),
+                                    e('td', { className: 'p-4 text-slate-400' }, r.limitStr),
+                                    e('td', { className: 'p-4' }, r.status !== null ? (r.status ? 'Pass' : 'Fail') : '-')
+                                )),
+                                e('tr', { className: 'bg-slate-50' },
+                                    e('td', { className: 'p-4 font-bold' }, 'Pan'),
+                                    e('td', { className: 'p-4' }, e('input', { type: 'number', className: 'border p-1 w-24 rounded', value: panWeight || '', onChange: event => setPanWeight(event.target.value) })),
+                                    e('td', { colSpan: 4, className: 'p-4 text-xs italic text-slate-400' }, 'Pan Bottom collector')
+                                ),
+                                e('tr', { className: 'bg-blue-50 font-bold' },
+                                    e('td', { className: 'p-4' }, 'Total'),
+                                    e('td', { className: 'p-4' }, `${results.total} g`),
+                                    e('td', { colSpan: 4, className: 'p-4' }, `Fineness Modulus: ${results.fm}`)
+                                )
+                            )
+                        )
+                    )
+                ),
+                e('footer', { className: 'mt-8 pb-4 text-center text-sm text-red-600' },
+                    e('p', {}, 'Conceived and developed by Vaisakh G.'),
+                    e('p', {}, 'Queries: WhatsApp 9656840794')
+                )
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(e(SieveAnalysisApp));
+    </script>
+</body>
+</html>
